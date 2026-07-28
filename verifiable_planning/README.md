@@ -39,10 +39,14 @@ Structural validators only:
 ```
 verifiable_planning/
 ├── KNOWLEDGE_RUBRIC.md   # Governing knowledge contract
+├── COMMIT_PROTOCOL.md    # Commit cadence and milestones
 ├── README.md             # This file
 ├── models.py             # Plan, Step, ValidationFinding, ValidationResult
 ├── validators.py         # Structural validators + graph construction
-└── examples.py           # Positive + deliberate failure cases
+├── examples.py           # Positive + deliberate failure cases
+├── pytest.ini
+└── tests/
+    └── test_validators.py  # Pos + neg case per structural check
 ```
 
 ## Run
@@ -52,7 +56,14 @@ cd verifiable_planning
 python3 examples.py
 ```
 
-Requires: Python 3.10+, pydantic, networkx.
+## Test
+
+```bash
+cd verifiable_planning
+python3 -m pytest -q
+```
+
+Requires: Python 3.10+, pydantic, networkx, pytest.
 
 ## Knowledge contract
 

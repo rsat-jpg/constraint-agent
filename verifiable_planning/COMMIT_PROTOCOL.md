@@ -69,7 +69,7 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | # | Milestone | Commit when | Status |
 |---|-----------|-------------|--------|
 | 0 | Baseline core | models + validators + examples + rubric + README runnable | done 2026-07-28 |
-| 1 | Evidence layer | formal tests (pos+neg per validator) | pending |
+| 1 | Evidence layer | formal tests (pos+neg per validator) | done 2026-07-28 |
 | 2 | Install surface | `requirements.txt` or minimal `pyproject.toml` | pending |
 | 3 | Richer structural rules | only after 1–2; one rule (or tight set) per commit | pending |
 | 4 | Expansion gate | written criteria for LLM/PDDL/runtime adapters | pending |
