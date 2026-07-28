@@ -42,6 +42,7 @@ Structural validators only:
 verifiable_planning/
 ├── KNOWLEDGE_RUBRIC.md   # Governing knowledge contract
 ├── COMMIT_PROTOCOL.md    # Commit cadence and milestones
+├── EXPANSION_GATE.md     # When / when-not to add adapters
 ├── README.md             # This file
 ├── pyproject.toml        # Package metadata + dependencies
 ├── requirements.txt      # Runtime deps (pip -r)
@@ -93,6 +94,10 @@ Read it before expanding the system.
 When and how to commit is defined in [`COMMIT_PROTOCOL.md`](COMMIT_PROTOCOL.md).  
 Commits mark proven increments; run the pre-commit checklist before each one.
 
+## Expansion gate
+
+Criteria for LLM / PDDL / runtime / multi-agent / UI work: [`EXPANSION_GATE.md`](EXPANSION_GATE.md).
+
 ## Scope discipline (v0.1)
 
 - Structural validation only
@@ -101,11 +106,13 @@ Commits mark proven increments; run the pre-commit checklist before each one.
 - No multi-agent orchestration
 - No UI
 
-Expansion only after the core is proven useful and remains high-signal.
+Expansion is governed by [`EXPANSION_GATE.md`](EXPANSION_GATE.md).  
+Do not add adapters until that gate’s preconditions and decision record are satisfied.
 
 ## Next natural increments
 
-- Expansion gate criteria (when/when-not to add adapters)
+_Only after an approved decision in `EXPANSION_GATE.md`:_
+
 - Thin LLM planner adapter that emits the Plan schema
 - Optional PDDL export / import
 - Runtime verification hooks

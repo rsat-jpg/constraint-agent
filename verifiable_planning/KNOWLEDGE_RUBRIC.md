@@ -57,9 +57,9 @@ Last updated: 2026-07-28
 
 - Exact boundary of what pure structural validation can reliably catch
 - Minimal powerful set of validation rules
-- Clean schema for "finding + suggested repair"
+- Clean schema for "finding + suggested repair" (v0.1 shape exists; may refine with use)
 - Packaging and documentation practices that make an open-source release actually usable
-- When structural verification should hand off to semantic or formal methods
+- ~~When structural verification should hand off to semantic or formal methods~~ → see [`EXPANSION_GATE.md`](EXPANSION_GATE.md)
 
 ---
 
