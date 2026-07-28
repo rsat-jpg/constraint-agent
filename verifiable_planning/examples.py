@@ -4,8 +4,7 @@ Simple runner and demonstration of the Validate stage.
 
 from __future__ import annotations
 
-from models import Plan, Step, ValidationResult
-from validators import validate_plan
+from verifiable_planning import Plan, Step, ValidationResult, validate_plan
 
 
 def print_result(result: ValidationResult) -> None:

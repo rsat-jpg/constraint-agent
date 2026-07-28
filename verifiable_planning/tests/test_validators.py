@@ -6,8 +6,7 @@ Failure injection is first-class: each negative case proves what v0.1 catches.
 
 from __future__ import annotations
 
-from models import Plan, Step, Severity
-from validators import validate_plan
+from verifiable_planning import Plan, Step, Severity, validate_plan
 
 
 def _codes(result) -> set[str]:

@@ -73,10 +73,11 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | 2 | Install surface | `requirements.txt` or minimal `pyproject.toml` | done 2026-07-28 |
 | 3 | Richer structural rules | only after 1–2; one rule (or tight set) per commit | done 2026-07-28 |
 | 4 | Expansion gate | written criteria for LLM/PDDL/runtime adapters | done 2026-07-28 |
+| 5 | Open-source readiness | MIT LICENSE, stranger quickstart, public package exports, schema stability note | done 2026-07-28 |
 
 Update the **Status** column when a milestone lands (`done` + date).
 
-Later milestones (LLM adapter, PDDL, runtime hooks) each get their own row only after the expansion gate.
+Later milestones (LLM adapter, PDDL, runtime hooks) each get their own row only after an approved decision in [`EXPANSION_GATE.md`](EXPANSION_GATE.md).
 
 ---
 

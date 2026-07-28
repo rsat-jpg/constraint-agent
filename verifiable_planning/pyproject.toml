@@ -19,9 +19,8 @@ dev = [
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-# Flat module layout for v0.1 — keep the core inspectable without a deep package tree.
-[tool.setuptools]
-py-modules = ["models", "validators", "examples"]
+[tool.setuptools.packages.find]
+include = ["verifiable_planning*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

@@ -8,7 +8,7 @@ These form the Validate stage of Plan-Validate-Execute.
 from __future__ import annotations
 
 import networkx as nx
-from models import Plan, ValidationFinding, ValidationResult, Severity
+from verifiable_planning.models import Plan, ValidationFinding, ValidationResult, Severity
 
 
 def build_graph(plan: Plan) -> nx.DiGraph:

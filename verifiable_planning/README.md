@@ -14,12 +14,42 @@ This core implements the **Validate** stage of Plan-Validate-Execute:
 
 No LLM. No external planners. Pure Python + pydantic + networkx.
 
-## Why this exists
+## Quickstart
 
-- Makes plan quality measurable before execution begins
-- Provides a clean, open foundation others can extend (LLM planner, PDDL, runtime checks)
-- Demonstrates systems thinking and reliability orientation
-- Stays small enough to remain inspectable and energy-compatible
+Python 3.10+. From this directory:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+```
+
+Validate a plan in a few lines:
+
+```python
+from verifiable_planning import Plan, Step, validate_plan
+
+plan = Plan(
+    id="demo",
+    goal="Ship a checked summary",
+    steps=[
+        Step(id="gather", description="Collect sources"),
+        Step(id="write", description="Draft summary", depends_on=["gather"],
+             expected_outcome="Markdown summary ready for review"),
+    ],
+)
+result = validate_plan(plan)
+print(result.is_valid, [f.code for f in result.findings])
+```
+
+Or run the bundled demos and tests:
+
+```bash
+python3 examples.py
+python3 -m pytest -q
+```
+
+Runtime-only install (no pytest): `pip install -r requirements.txt` then keep this directory on `PYTHONPATH`, or use `pip install -e .`.
 
 ## Current status (v0.1)
 
@@ -36,52 +66,31 @@ Structural validators only:
 | PRECONDITION_NOT_IN_DEPENDS_ON| warning  | Precondition names a step id omitted from depends_on             |
 | MISSING_TERMINAL_OUTCOME      | warning  | No terminal step declares expected_outcome (goal-coverage proxy) |
 
+## Schema stability
+
+- Package version: `0.1.0` (`verifiable_planning.__version__`)
+- Plan schema version field: `Plan.version` defaults to `"0.1.0"` (`SCHEMA_VERSION`)
+- Within **0.1.x**, public models (`Plan`, `Step`, `ValidationFinding`, `ValidationResult`) and `validate_plan` keep additive-compatible shapes. Breaking field or finding-code changes bump the version and are called out in the commit message.
+
 ## Project layout
 
 ```
-verifiable_planning/
-├── KNOWLEDGE_RUBRIC.md   # Governing knowledge contract
-├── COMMIT_PROTOCOL.md    # Commit cadence and milestones
-├── EXPANSION_GATE.md     # When / when-not to add adapters
-├── README.md             # This file
-├── pyproject.toml        # Package metadata + dependencies
-├── requirements.txt      # Runtime deps (pip -r)
-├── requirements-dev.txt  # Runtime + pytest
-├── models.py             # Plan, Step, ValidationFinding, ValidationResult
-├── validators.py         # Structural validators + graph construction
-├── examples.py           # Positive + deliberate failure cases
-├── pytest.ini
+verifiable_planning/                 # this project root
+├── LICENSE
+├── KNOWLEDGE_RUBRIC.md              # Governing knowledge contract
+├── COMMIT_PROTOCOL.md               # Commit cadence and milestones
+├── EXPANSION_GATE.md                # When / when-not to add adapters
+├── README.md
+├── pyproject.toml
+├── requirements.txt
+├── requirements-dev.txt
+├── examples.py                      # Positive + deliberate failure cases
+├── verifiable_planning/             # Installable package
+│   ├── __init__.py                  # Public exports
+│   ├── models.py                    # Plan, Step, findings, result
+│   └── validators.py                # Structural validators + graph
 └── tests/
-    └── test_validators.py  # Pos + neg case per structural check
-```
-
-## Install
-
-Python 3.10+. From this directory (venv recommended):
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-
-# runtime only
-pip install -r requirements.txt
-
-# or editable install with test tooling
-pip install -e ".[dev]"
-```
-
-## Run
-
-```bash
-cd verifiable_planning
-python3 examples.py
-```
-
-## Test
-
-```bash
-cd verifiable_planning
-python3 -m pytest -q
+    └── test_validators.py
 ```
 
 ## Knowledge contract
@@ -117,7 +126,8 @@ _Only after an approved decision in `EXPANSION_GATE.md`:_
 - Optional PDDL export / import
 - Runtime verification hooks
 
-## License / openness
+Still inside Validate (no gate decision required): one tighter structural rule family at a time.
 
-Intended as clean open-source foundation.  
-Core contracts are kept stable so adapters can be added without rewriting the foundation.
+## License
+
+MIT — see [`LICENSE`](LICENSE).
