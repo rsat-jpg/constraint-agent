@@ -165,7 +165,14 @@ def test_isolated_step_positive_single_step_exempt():
     plan = Plan(
         id="solo",
         goal="One step",
-        steps=[Step(id="only", description="Only step", depends_on=[])],
+        steps=[
+            Step(
+                id="only",
+                description="Only step",
+                depends_on=[],
+                expected_outcome="Goal advanced",
+            ),
+        ],
     )
     result = validate_plan(plan)
     assert "ISOLATED_STEP" not in _codes(result)
@@ -214,6 +221,112 @@ def test_irreversible_no_outcome_positive():
     result = validate_plan(plan)
     assert "IRREVERSIBLE_NO_OUTCOME" not in _codes(result)
     assert result.is_valid is True
+
+
+# ---------------------------------------------------------------------------
+# PRECONDITION_NOT_IN_DEPENDS_ON
+# ---------------------------------------------------------------------------
+
+def test_precondition_not_in_depends_on_negative():
+    plan = Plan(
+        id="precond-mismatch",
+        goal="Precondition without edge",
+        steps=[
+            Step(id="gather", description="Collect sources", depends_on=[]),
+            Step(
+                id="extract",
+                description="Extract claims",
+                depends_on=[],  # missing edge
+                preconditions=["gather"],
+                expected_outcome="Claim list",
+            ),
+        ],
+    )
+    result = validate_plan(plan)
+    assert result.is_valid is True
+    assert "PRECONDITION_NOT_IN_DEPENDS_ON" in _codes_of(result, Severity.WARNING)
+    finding = next(f for f in result.findings if f.code == "PRECONDITION_NOT_IN_DEPENDS_ON")
+    assert finding.step_ids == ["extract"]
+    assert finding.suggested_repair
+
+
+def test_precondition_not_in_depends_on_positive_aligned():
+    plan = Plan(
+        id="precond-ok",
+        goal="Aligned precondition",
+        steps=[
+            Step(id="gather", description="Collect sources", depends_on=[]),
+            Step(
+                id="extract",
+                description="Extract claims",
+                depends_on=["gather"],
+                preconditions=["gather"],
+                expected_outcome="Claim list",
+            ),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "PRECONDITION_NOT_IN_DEPENDS_ON" not in _codes(result)
+
+
+def test_precondition_not_in_depends_on_positive_freeform_label():
+    """Non-step condition labels are ignored by this structural check."""
+    plan = Plan(
+        id="precond-label",
+        goal="Free-form precondition",
+        steps=[
+            Step(
+                id="only",
+                description="Work",
+                depends_on=[],
+                preconditions=["sources_available"],
+                expected_outcome="Done",
+            ),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "PRECONDITION_NOT_IN_DEPENDS_ON" not in _codes(result)
+
+
+# ---------------------------------------------------------------------------
+# MISSING_TERMINAL_OUTCOME
+# ---------------------------------------------------------------------------
+
+def test_missing_terminal_outcome_negative():
+    plan = Plan(
+        id="no-terminal-outcome",
+        goal="Reach a goal without stating outcomes",
+        steps=[
+            Step(id="a", description="A", depends_on=[]),
+            Step(id="b", description="B", depends_on=["a"]),
+        ],
+    )
+    result = validate_plan(plan)
+    assert result.is_valid is True
+    assert "MISSING_TERMINAL_OUTCOME" in _codes_of(result, Severity.WARNING)
+    finding = next(f for f in result.findings if f.code == "MISSING_TERMINAL_OUTCOME")
+    assert finding.step_ids == ["b"]
+    assert finding.suggested_repair
+
+
+def test_missing_terminal_outcome_positive():
+    result = validate_plan(_chain_plan())
+    assert "MISSING_TERMINAL_OUTCOME" not in _codes(result)
+
+
+def test_missing_terminal_outcome_skipped_on_cycle():
+    plan = Plan(
+        id="cycle-skip-terminal",
+        goal="Cycle owns the failure",
+        steps=[
+            Step(id="a", description="A", depends_on=["c"]),
+            Step(id="b", description="B", depends_on=["a"]),
+            Step(id="c", description="C", depends_on=["b"]),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "DEPENDENCY_CYCLE" in _codes(result)
+    assert "MISSING_TERMINAL_OUTCOME" not in _codes(result)
 
 
 # ---------------------------------------------------------------------------

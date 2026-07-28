@@ -25,14 +25,16 @@ No LLM. No external planners. Pure Python + pydantic + networkx.
 
 Structural validators only:
 
-| Check                    | Severity | Description                                      |
-|--------------------------|----------|--------------------------------------------------|
-| EMPTY_PLAN               | error    | No steps present                                 |
-| DUPLICATE_STEP_ID        | error    | Repeated step identifiers                        |
-| UNKNOWN_DEPENDENCY       | error    | depends_on references a non-existent step        |
-| DEPENDENCY_CYCLE         | error    | Cycle in the dependency graph                    |
-| ISOLATED_STEP            | warning  | Step with no edges in a multi-step plan          |
-| IRREVERSIBLE_NO_OUTCOME  | warning  | Irreversible step lacks expected_outcome         |
+| Check                         | Severity | Description                                                      |
+|-------------------------------|----------|------------------------------------------------------------------|
+| EMPTY_PLAN                    | error    | No steps present                                                 |
+| DUPLICATE_STEP_ID             | error    | Repeated step identifiers                                        |
+| UNKNOWN_DEPENDENCY            | error    | depends_on references a non-existent step                        |
+| DEPENDENCY_CYCLE              | error    | Cycle in the dependency graph                                    |
+| ISOLATED_STEP                 | warning  | Step with no edges in a multi-step plan                          |
+| IRREVERSIBLE_NO_OUTCOME       | warning  | Irreversible step lacks expected_outcome                         |
+| PRECONDITION_NOT_IN_DEPENDS_ON| warning  | Precondition names a step id omitted from depends_on             |
+| MISSING_TERMINAL_OUTCOME      | warning  | No terminal step declares expected_outcome (goal-coverage proxy) |
 
 ## Project layout
 
@@ -103,7 +105,7 @@ Expansion only after the core is proven useful and remains high-signal.
 
 ## Next natural increments
 
-- Richer structural rules (missing goal coverage, precondition consistency)
+- Expansion gate criteria (when/when-not to add adapters)
 - Thin LLM planner adapter that emits the Plan schema
 - Optional PDDL export / import
 - Runtime verification hooks

@@ -92,6 +92,30 @@ def main() -> None:
         ],
     )
 
+    precond_mismatch = Plan(
+        id="plan-precond",
+        goal="Precondition without depends_on edge",
+        steps=[
+            Step(id="gather", description="Collect sources", depends_on=[]),
+            Step(
+                id="extract",
+                description="Extract claims",
+                depends_on=[],
+                preconditions=["gather"],
+                expected_outcome="Claim list",
+            ),
+        ],
+    )
+
+    no_terminal_outcome = Plan(
+        id="plan-no-terminal-outcome",
+        goal="Steps without a stated terminal outcome",
+        steps=[
+            Step(id="a", description="Step A", depends_on=[]),
+            Step(id="b", description="Step B", depends_on=["a"]),
+        ],
+    )
+
     print("=== GOOD PLAN ===")
     print_result(validate_plan(good))
 
@@ -109,6 +133,12 @@ def main() -> None:
 
     print("\n=== IRREVERSIBLE WITHOUT OUTCOME ===")
     print_result(validate_plan(irreversible))
+
+    print("\n=== PRECONDITION NOT IN DEPENDS_ON ===")
+    print_result(validate_plan(precond_mismatch))
+
+    print("\n=== MISSING TERMINAL OUTCOME ===")
+    print_result(validate_plan(no_terminal_outcome))
 
 
 if __name__ == "__main__":

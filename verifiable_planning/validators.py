@@ -35,6 +35,8 @@ def validate_plan(plan: Plan) -> ValidationResult:
     findings.extend(_check_cycles(plan))
     findings.extend(_check_unreachable_steps(plan))
     findings.extend(_check_irreversible_without_context(plan))
+    findings.extend(_check_precondition_depends_on(plan))
+    findings.extend(_check_missing_terminal_outcome(plan))
 
     errors = [f for f in findings if f.severity == Severity.ERROR]
     return ValidationResult(
@@ -151,3 +153,71 @@ def _check_irreversible_without_context(plan: Plan) -> list[ValidationFinding]:
                 suggested_repair="Add a clear expected_outcome so the step can be reviewed before execution.",
             ))
     return findings
+
+
+def _check_precondition_depends_on(plan: Plan) -> list[ValidationFinding]:
+    """
+    Preconditions that name known step IDs must also appear in depends_on.
+    Free-form condition labels (not matching any step id) are ignored in v0.1.
+    """
+    known = plan.step_ids()
+    findings = []
+    for step in plan.steps:
+        missing_edges = [
+            p for p in step.preconditions
+            if p in known and p not in step.depends_on
+        ]
+        if missing_edges:
+            findings.append(ValidationFinding(
+                code="PRECONDITION_NOT_IN_DEPENDS_ON",
+                severity=Severity.WARNING,
+                message=(
+                    f"Step '{step.id}' lists precondition step id(s) {missing_edges} "
+                    f"but omits them from depends_on."
+                ),
+                step_ids=[step.id],
+                suggested_repair="Add the precondition step id(s) to depends_on, or use a non-step condition label.",
+            ))
+    return findings
+
+
+def _check_missing_terminal_outcome(plan: Plan) -> list[ValidationFinding]:
+    """
+    Structural proxy for goal coverage: at least one terminal step
+    (no dependents) should declare an expected_outcome.
+    Skipped when the graph has cycles — DEPENDENCY_CYCLE owns that case.
+    """
+    if not plan.steps:
+        return []
+    g = build_graph(plan)
+    known = plan.step_ids()
+    # Only consider nodes that are real plan steps (unknown deps may add ghost nodes).
+    step_nodes = [n for n in g.nodes if n in known]
+    if not step_nodes:
+        return []
+    subgraph = g.subgraph(step_nodes)
+    if not nx.is_directed_acyclic_graph(subgraph):
+        return []
+    terminals = [n for n in step_nodes if subgraph.out_degree(n) == 0]
+    if not terminals:
+        return []
+    lacking: list[str] = []
+    for n in terminals:
+        step = plan.get_step(n)
+        if step is not None and not step.expected_outcome.strip():
+            lacking.append(n)
+    if len(lacking) == len(terminals):
+        return [ValidationFinding(
+            code="MISSING_TERMINAL_OUTCOME",
+            severity=Severity.WARNING,
+            message=(
+                "No terminal step declares an expected_outcome — "
+                "goal coverage is not structurally evidenced."
+            ),
+            step_ids=sorted(terminals),
+            suggested_repair=(
+                "Add expected_outcome on at least one terminal step "
+                "(a step nothing else depends on)."
+            ),
+        )]
+    return []
