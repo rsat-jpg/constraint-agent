@@ -41,12 +41,30 @@ verifiable_planning/
 ├── KNOWLEDGE_RUBRIC.md   # Governing knowledge contract
 ├── COMMIT_PROTOCOL.md    # Commit cadence and milestones
 ├── README.md             # This file
+├── pyproject.toml        # Package metadata + dependencies
+├── requirements.txt      # Runtime deps (pip -r)
+├── requirements-dev.txt  # Runtime + pytest
 ├── models.py             # Plan, Step, ValidationFinding, ValidationResult
 ├── validators.py         # Structural validators + graph construction
 ├── examples.py           # Positive + deliberate failure cases
 ├── pytest.ini
 └── tests/
     └── test_validators.py  # Pos + neg case per structural check
+```
+
+## Install
+
+Python 3.10+. From this directory (venv recommended):
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+
+# runtime only
+pip install -r requirements.txt
+
+# or editable install with test tooling
+pip install -e ".[dev]"
 ```
 
 ## Run
@@ -62,8 +80,6 @@ python3 examples.py
 cd verifiable_planning
 python3 -m pytest -q
 ```
-
-Requires: Python 3.10+, pydantic, networkx, pytest.
 
 ## Knowledge contract
 

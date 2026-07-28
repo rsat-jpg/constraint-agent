@@ -1,0 +1,28 @@
+[project]
+name = "verifiable-planning"
+version = "0.1.0"
+description = "Structural validation for multi-step agent plans (Plan-Validate-Execute)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "pydantic>=2.0",
+    "networkx>=3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Flat module layout for v0.1 — keep the core inspectable without a deep package tree.
+[tool.setuptools]
+py-modules = ["models", "validators", "examples"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
