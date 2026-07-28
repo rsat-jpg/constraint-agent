@@ -1,0 +1,23 @@
+---
+description: Commit cadence and rules for the verifiable planning core
+alwaysApply: true
+---
+
+# Commit Protocol
+
+Follow `verifiable_planning/COMMIT_PROTOCOL.md`.
+
+## Hard rules
+
+- Commit only when the user explicitly asks, or after proposing a commit and receiving approval.
+- Prefer commits that close a protocol milestone or a listed trigger (validator, schema, tests, docs contract, packaging, fix).
+- Never commit broken `python3 examples.py`, secrets, or `__pycache__` / `.venv`.
+- Keep commits one logical increment; split unrelated work.
+- Message format: `type: short why` (`feat` / `fix` / `test` / `docs` / `chore` / `refactor`).
+
+## Before proposing a commit
+
+1. Confirm Essential rubric rows still hold.
+2. Run `python3 examples.py` from `verifiable_planning/`.
+3. If validators changed, ensure pos+neg evidence exists.
+4. Propose: milestone (if any), message, and file list — then wait.

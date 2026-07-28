@@ -1,0 +1,153 @@
+"""
+Structural validators for plans.
+
+Deterministic, pure-Python checks. No LLM. No external planners.
+These form the Validate stage of Plan-Validate-Execute.
+"""
+
+from __future__ import annotations
+
+import networkx as nx
+from models import Plan, ValidationFinding, ValidationResult, Severity
+
+
+def build_graph(plan: Plan) -> nx.DiGraph:
+    """Construct a directed graph from plan steps and depends_on edges."""
+    g = nx.DiGraph()
+    for step in plan.steps:
+        g.add_node(step.id, step=step)
+    for step in plan.steps:
+        for dep in step.depends_on:
+            g.add_edge(dep, step.id)
+    return g
+
+
+def validate_plan(plan: Plan) -> ValidationResult:
+    """
+    Run all structural validators and return a structured result.
+    is_valid is True only when there are zero ERROR findings.
+    """
+    findings: list[ValidationFinding] = []
+
+    findings.extend(_check_empty_plan(plan))
+    findings.extend(_check_duplicate_ids(plan))
+    findings.extend(_check_unknown_dependencies(plan))
+    findings.extend(_check_cycles(plan))
+    findings.extend(_check_unreachable_steps(plan))
+    findings.extend(_check_irreversible_without_context(plan))
+
+    errors = [f for f in findings if f.severity == Severity.ERROR]
+    return ValidationResult(
+        plan_id=plan.id,
+        is_valid=len(errors) == 0,
+        findings=findings,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Individual validators
+# ---------------------------------------------------------------------------
+
+def _check_empty_plan(plan: Plan) -> list[ValidationFinding]:
+    if not plan.steps:
+        return [ValidationFinding(
+            code="EMPTY_PLAN",
+            severity=Severity.ERROR,
+            message="Plan contains no steps.",
+            suggested_repair="Add at least one step that advances the goal.",
+        )]
+    return []
+
+
+def _check_duplicate_ids(plan: Plan) -> list[ValidationFinding]:
+    seen: set[str] = set()
+    dups: list[str] = []
+    for s in plan.steps:
+        if s.id in seen:
+            dups.append(s.id)
+        seen.add(s.id)
+    if dups:
+        return [ValidationFinding(
+            code="DUPLICATE_STEP_ID",
+            severity=Severity.ERROR,
+            message=f"Duplicate step id(s): {sorted(set(dups))}",
+            step_ids=sorted(set(dups)),
+            suggested_repair="Ensure every step has a unique id.",
+        )]
+    return []
+
+
+def _check_unknown_dependencies(plan: Plan) -> list[ValidationFinding]:
+    known = plan.step_ids()
+    findings = []
+    for step in plan.steps:
+        unknown = [d for d in step.depends_on if d not in known]
+        if unknown:
+            findings.append(ValidationFinding(
+                code="UNKNOWN_DEPENDENCY",
+                severity=Severity.ERROR,
+                message=f"Step '{step.id}' depends on unknown id(s): {unknown}",
+                step_ids=[step.id],
+                suggested_repair="Remove the unknown dependency or add the missing step.",
+            ))
+    return findings
+
+
+def _check_cycles(plan: Plan) -> list[ValidationFinding]:
+    g = build_graph(plan)
+    try:
+        cycles = list(nx.simple_cycles(g))
+    except nx.NetworkXNoCycle:
+        cycles = []
+    if cycles:
+        # Report each unique cycle once
+        reported = []
+        for cycle in cycles:
+            cyc_str = " -> ".join(cycle + [cycle[0]])
+            reported.append(ValidationFinding(
+                code="DEPENDENCY_CYCLE",
+                severity=Severity.ERROR,
+                message=f"Dependency cycle detected: {cyc_str}",
+                step_ids=cycle,
+                suggested_repair="Break the cycle by removing or reordering one of the depends_on edges.",
+            ))
+        return reported
+    return []
+
+
+def _check_unreachable_steps(plan: Plan) -> list[ValidationFinding]:
+    """
+    Steps that have no path from any root (steps with no incoming edges)
+    and are not themselves roots are considered unreachable in a simple sense.
+    For v0.1 we flag steps that are isolated (no edges at all) when the plan
+    has more than one step — usually a sign of a missing dependency.
+    """
+    if len(plan.steps) <= 1:
+        return []
+    g = build_graph(plan)
+    findings = []
+    for node in g.nodes:
+        if g.in_degree(node) == 0 and g.out_degree(node) == 0:
+            findings.append(ValidationFinding(
+                code="ISOLATED_STEP",
+                severity=Severity.WARNING,
+                message=f"Step '{node}' has no dependencies and nothing depends on it.",
+                step_ids=[node],
+                suggested_repair="Connect it via depends_on or confirm it is intentionally independent.",
+            ))
+    return findings
+
+
+def _check_irreversible_without_context(plan: Plan) -> list[ValidationFinding]:
+    """Soft check: irreversible steps should ideally have clear expected outcomes."""
+    findings = []
+    for step in plan.steps:
+        if step.is_irreversible and not step.expected_outcome.strip():
+            findings.append(ValidationFinding(
+                code="IRREVERSIBLE_NO_OUTCOME",
+                severity=Severity.WARNING,
+                message=f"Irreversible step '{step.id}' has no expected_outcome described.",
+                step_ids=[step.id],
+                suggested_repair="Add a clear expected_outcome so the step can be reviewed before execution.",
+            ))
+    return findings
