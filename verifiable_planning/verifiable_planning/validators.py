@@ -8,6 +8,7 @@ These form the Validate stage of Plan-Validate-Execute.
 from __future__ import annotations
 
 import networkx as nx
+from verifiable_planning import finding_codes as codes
 from verifiable_planning.models import Plan, ValidationFinding, ValidationResult, Severity
 
 
@@ -35,8 +36,21 @@ def validate_plan(plan: Plan) -> ValidationResult:
     findings.extend(_check_self_dependencies(plan))
     findings.extend(_check_duplicate_dependencies(plan))
     findings.extend(_check_cycles(plan))
-    findings.extend(_check_unreachable_steps(plan))
-    findings.extend(_check_disconnected_graph(plan))
+
+    # Graph warnings: DISCONNECTED_GRAPH owns orphans outside the largest
+    # multi-node component; ISOLATED_STEP covers pure isolate bags.
+    disconnected = _check_disconnected_graph(plan)
+    findings.extend(disconnected)
+    covered_by_disconnected = {
+        sid
+        for f in disconnected
+        for sid in f.step_ids
+    }
+    findings.extend(
+        f for f in _check_unreachable_steps(plan)
+        if not f.step_ids or f.step_ids[0] not in covered_by_disconnected
+    )
+
     findings.extend(_check_irreversible_without_context(plan))
     findings.extend(_check_precondition_depends_on(plan))
     findings.extend(_check_missing_terminal_outcome(plan))
@@ -56,7 +70,7 @@ def validate_plan(plan: Plan) -> ValidationResult:
 def _check_empty_plan(plan: Plan) -> list[ValidationFinding]:
     if not plan.steps:
         return [ValidationFinding(
-            code="EMPTY_PLAN",
+            code=codes.EMPTY_PLAN,
             severity=Severity.ERROR,
             message="Plan contains no steps.",
             suggested_repair="Add at least one step that advances the goal.",
@@ -73,7 +87,7 @@ def _check_duplicate_ids(plan: Plan) -> list[ValidationFinding]:
         seen.add(s.id)
     if dups:
         return [ValidationFinding(
-            code="DUPLICATE_STEP_ID",
+            code=codes.DUPLICATE_STEP_ID,
             severity=Severity.ERROR,
             message=f"Duplicate step id(s): {sorted(set(dups))}",
             step_ids=sorted(set(dups)),
@@ -89,7 +103,7 @@ def _check_unknown_dependencies(plan: Plan) -> list[ValidationFinding]:
         unknown = [d for d in step.depends_on if d not in known]
         if unknown:
             findings.append(ValidationFinding(
-                code="UNKNOWN_DEPENDENCY",
+                code=codes.UNKNOWN_DEPENDENCY,
                 severity=Severity.ERROR,
                 message=f"Step '{step.id}' depends on unknown id(s): {unknown}",
                 step_ids=[step.id],
@@ -104,7 +118,7 @@ def _check_self_dependencies(plan: Plan) -> list[ValidationFinding]:
     for step in plan.steps:
         if step.id in step.depends_on:
             findings.append(ValidationFinding(
-                code="SELF_DEPENDENCY",
+                code=codes.SELF_DEPENDENCY,
                 severity=Severity.ERROR,
                 message=f"Step '{step.id}' depends on itself.",
                 step_ids=[step.id],
@@ -125,7 +139,7 @@ def _check_duplicate_dependencies(plan: Plan) -> list[ValidationFinding]:
             seen.add(dep)
         if dups:
             findings.append(ValidationFinding(
-                code="DUPLICATE_DEPENDENCY",
+                code=codes.DUPLICATE_DEPENDENCY,
                 severity=Severity.WARNING,
                 message=(
                     f"Step '{step.id}' lists duplicate depends_on id(s): {dups}."
@@ -150,7 +164,7 @@ def _check_cycles(plan: Plan) -> list[ValidationFinding]:
                 continue
             cyc_str = " -> ".join(cycle + [cycle[0]])
             reported.append(ValidationFinding(
-                code="DEPENDENCY_CYCLE",
+                code=codes.DEPENDENCY_CYCLE,
                 severity=Severity.ERROR,
                 message=f"Dependency cycle detected: {cyc_str}",
                 step_ids=cycle,
@@ -174,7 +188,7 @@ def _check_unreachable_steps(plan: Plan) -> list[ValidationFinding]:
     for node in g.nodes:
         if g.in_degree(node) == 0 and g.out_degree(node) == 0:
             findings.append(ValidationFinding(
-                code="ISOLATED_STEP",
+                code=codes.ISOLATED_STEP,
                 severity=Severity.WARNING,
                 message=f"Step '{node}' has no dependencies and nothing depends on it.",
                 step_ids=[node],
@@ -188,6 +202,8 @@ def _check_disconnected_graph(plan: Plan) -> list[ValidationFinding]:
     Multi-step plans should form one weakly connected dependency graph.
     Separate chains (a→b and c→d) are a common LLM planning defect that
     ISOLATED_STEP misses because those steps still have edges.
+
+    Pure isolate bags (all components size 1) are owned by ISOLATED_STEP.
     """
     if len(plan.steps) <= 1:
         return []
@@ -203,15 +219,16 @@ def _check_disconnected_graph(plan: Plan) -> list[ValidationFinding]:
     ]
     if len(components) <= 1:
         return []
+    if max(len(c) for c in components) < 2:
+        return []
     components.sort(key=lambda c: (-len(c), c))
-    largest = set(components[0])
     extra_ids = sorted(
         step_id
         for comp in components[1:]
         for step_id in comp
     )
     return [ValidationFinding(
-        code="DISCONNECTED_GRAPH",
+        code=codes.DISCONNECTED_GRAPH,
         severity=Severity.WARNING,
         message=(
             f"Plan dependency graph has {len(components)} disconnected "
@@ -230,7 +247,7 @@ def _check_irreversible_without_context(plan: Plan) -> list[ValidationFinding]:
     for step in plan.steps:
         if step.is_irreversible and not step.expected_outcome.strip():
             findings.append(ValidationFinding(
-                code="IRREVERSIBLE_NO_OUTCOME",
+                code=codes.IRREVERSIBLE_NO_OUTCOME,
                 severity=Severity.WARNING,
                 message=f"Irreversible step '{step.id}' has no expected_outcome described.",
                 step_ids=[step.id],
@@ -253,7 +270,7 @@ def _check_precondition_depends_on(plan: Plan) -> list[ValidationFinding]:
         ]
         if missing_edges:
             findings.append(ValidationFinding(
-                code="PRECONDITION_NOT_IN_DEPENDS_ON",
+                code=codes.PRECONDITION_NOT_IN_DEPENDS_ON,
                 severity=Severity.WARNING,
                 message=(
                     f"Step '{step.id}' lists precondition step id(s) {missing_edges} "
@@ -292,7 +309,7 @@ def _check_missing_terminal_outcome(plan: Plan) -> list[ValidationFinding]:
             lacking.append(n)
     if len(lacking) == len(terminals):
         return [ValidationFinding(
-            code="MISSING_TERMINAL_OUTCOME",
+            code=codes.MISSING_TERMINAL_OUTCOME,
             severity=Severity.WARNING,
             message=(
                 "No terminal step declares an expected_outcome — "

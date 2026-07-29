@@ -268,6 +268,7 @@ def test_disconnected_graph_negative_two_chains():
     )
     result = validate_plan(plan)
     assert "DISCONNECTED_GRAPH" in _codes(result)
+    assert "ISOLATED_STEP" not in _codes(result)
     assert result.is_valid is True
     finding = next(f for f in result.findings if f.code == "DISCONNECTED_GRAPH")
     assert finding.severity == Severity.WARNING
@@ -278,6 +279,7 @@ def test_disconnected_graph_negative_two_chains():
 def test_disconnected_graph_positive_connected():
     result = validate_plan(_chain_plan())
     assert "DISCONNECTED_GRAPH" not in _codes(result)
+    assert "ISOLATED_STEP" not in _codes(result)
 
 
 def test_disconnected_graph_edge_chain_plus_isolated():
@@ -297,9 +299,27 @@ def test_disconnected_graph_edge_chain_plus_isolated():
     )
     result = validate_plan(plan)
     assert "DISCONNECTED_GRAPH" in _codes(result)
-    assert "ISOLATED_STEP" in _codes(result)
+    assert "ISOLATED_STEP" not in _codes(result)
     finding = next(f for f in result.findings if f.code == "DISCONNECTED_GRAPH")
     assert finding.step_ids == ["orphan"]
+
+
+def test_all_isolates_use_isolated_step_not_disconnected():
+    plan = Plan(
+        id="all-isolates",
+        goal="Two unconnected degree-zero steps",
+        steps=[
+            Step(id="main", description="Main work", depends_on=[]),
+            Step(id="orphan", description="Orphaned step", depends_on=[]),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "ISOLATED_STEP" in _codes(result)
+    assert "DISCONNECTED_GRAPH" not in _codes(result)
+    assert {f.step_ids[0] for f in result.findings if f.code == "ISOLATED_STEP"} == {
+        "main",
+        "orphan",
+    }
 
 
 # ---------------------------------------------------------------------------

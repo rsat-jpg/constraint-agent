@@ -69,6 +69,13 @@ Structural validators only:
 | PRECONDITION_NOT_IN_DEPENDS_ON| warning  | Precondition names a step id omitted from depends_on             |
 | MISSING_TERMINAL_OUTCOME      | warning  | No terminal step declares expected_outcome (goal-coverage proxy) |
 
+### Finding overlap (graph warnings)
+
+- Pure isolate bags (every step has no edges): `ISOLATED_STEP` only — not `DISCONNECTED_GRAPH`.
+- Two or more real subgraphs (at least one component with ≥2 steps): `DISCONNECTED_GRAPH` only for steps outside the largest component.
+- Chain + orphan: `DISCONNECTED_GRAPH` owns the orphan; `ISOLATED_STEP` is suppressed for those step ids.
+- A single weakly connected component: neither graph warning.
+
 ## Schema stability
 
 - Package version: `0.1.0` (`verifiable_planning.__version__`)
