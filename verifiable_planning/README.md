@@ -64,6 +64,7 @@ Structural validators only:
 | DEPENDENCY_CYCLE              | error    | Cycle in the dependency graph (multi-node; self-loops use SELF_DEPENDENCY) |
 | DUPLICATE_DEPENDENCY          | warning  | depends_on lists the same step id more than once                 |
 | ISOLATED_STEP                 | warning  | Step with no edges in a multi-step plan                          |
+| DISCONNECTED_GRAPH            | warning  | depends_on graph has multiple weakly connected components        |
 | IRREVERSIBLE_NO_OUTCOME       | warning  | Irreversible step lacks expected_outcome                         |
 | PRECONDITION_NOT_IN_DEPENDS_ON| warning  | Precondition names a step id omitted from depends_on             |
 | MISSING_TERMINAL_OUTCOME      | warning  | No terminal step declares expected_outcome (goal-coverage proxy) |

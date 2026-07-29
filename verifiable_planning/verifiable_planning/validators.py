@@ -36,6 +36,7 @@ def validate_plan(plan: Plan) -> ValidationResult:
     findings.extend(_check_duplicate_dependencies(plan))
     findings.extend(_check_cycles(plan))
     findings.extend(_check_unreachable_steps(plan))
+    findings.extend(_check_disconnected_graph(plan))
     findings.extend(_check_irreversible_without_context(plan))
     findings.extend(_check_precondition_depends_on(plan))
     findings.extend(_check_missing_terminal_outcome(plan))
@@ -180,6 +181,47 @@ def _check_unreachable_steps(plan: Plan) -> list[ValidationFinding]:
                 suggested_repair="Connect it via depends_on or confirm it is intentionally independent.",
             ))
     return findings
+
+
+def _check_disconnected_graph(plan: Plan) -> list[ValidationFinding]:
+    """
+    Multi-step plans should form one weakly connected dependency graph.
+    Separate chains (a→b and c→d) are a common LLM planning defect that
+    ISOLATED_STEP misses because those steps still have edges.
+    """
+    if len(plan.steps) <= 1:
+        return []
+    known = plan.step_ids()
+    g = build_graph(plan)
+    step_nodes = [n for n in g.nodes if n in known]
+    if len(step_nodes) <= 1:
+        return []
+    subgraph = g.subgraph(step_nodes)
+    components = [
+        sorted(comp)
+        for comp in nx.weakly_connected_components(subgraph)
+    ]
+    if len(components) <= 1:
+        return []
+    components.sort(key=lambda c: (-len(c), c))
+    largest = set(components[0])
+    extra_ids = sorted(
+        step_id
+        for comp in components[1:]
+        for step_id in comp
+    )
+    return [ValidationFinding(
+        code="DISCONNECTED_GRAPH",
+        severity=Severity.WARNING,
+        message=(
+            f"Plan dependency graph has {len(components)} disconnected "
+            f"components; steps outside the largest component: {extra_ids}."
+        ),
+        step_ids=extra_ids,
+        suggested_repair=(
+            "Connect the subgraphs via depends_on, or split into separate plans."
+        ),
+    )]
 
 
 def _check_irreversible_without_context(plan: Plan) -> list[ValidationFinding]:

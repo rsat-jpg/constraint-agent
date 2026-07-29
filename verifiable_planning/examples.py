@@ -104,6 +104,27 @@ def main() -> None:
         ],
     )
 
+    disconnected = Plan(
+        id="plan-disconnected",
+        goal="Two separate workstreams",
+        steps=[
+            Step(id="a", description="Chain A start", depends_on=[]),
+            Step(
+                id="b",
+                description="Chain A end",
+                depends_on=["a"],
+                expected_outcome="A done",
+            ),
+            Step(id="c", description="Chain C start", depends_on=[]),
+            Step(
+                id="d",
+                description="Chain C end",
+                depends_on=["c"],
+                expected_outcome="C done",
+            ),
+        ],
+    )
+
     irreversible = Plan(
         id="plan-irreversible",
         goal="Irreversible without outcome description",
@@ -162,6 +183,9 @@ def main() -> None:
 
     print("\n=== ISOLATED STEP ===")
     print_result(validate_plan(isolated))
+
+    print("\n=== DISCONNECTED GRAPH ===")
+    print_result(validate_plan(disconnected))
 
     print("\n=== IRREVERSIBLE WITHOUT OUTCOME ===")
     print_result(validate_plan(irreversible))

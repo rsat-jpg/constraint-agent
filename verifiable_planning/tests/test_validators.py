@@ -242,6 +242,67 @@ def test_isolated_step_positive_single_step_exempt():
 
 
 # ---------------------------------------------------------------------------
+# DISCONNECTED_GRAPH
+# ---------------------------------------------------------------------------
+
+def test_disconnected_graph_negative_two_chains():
+    plan = Plan(
+        id="two-chains",
+        goal="Two separate workstreams",
+        steps=[
+            Step(id="a", description="Chain A start", depends_on=[]),
+            Step(
+                id="b",
+                description="Chain A end",
+                depends_on=["a"],
+                expected_outcome="A done",
+            ),
+            Step(id="c", description="Chain C start", depends_on=[]),
+            Step(
+                id="d",
+                description="Chain C end",
+                depends_on=["c"],
+                expected_outcome="C done",
+            ),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "DISCONNECTED_GRAPH" in _codes(result)
+    assert result.is_valid is True
+    finding = next(f for f in result.findings if f.code == "DISCONNECTED_GRAPH")
+    assert finding.severity == Severity.WARNING
+    assert finding.step_ids == ["c", "d"]
+    assert finding.suggested_repair
+
+
+def test_disconnected_graph_positive_connected():
+    result = validate_plan(_chain_plan())
+    assert "DISCONNECTED_GRAPH" not in _codes(result)
+
+
+def test_disconnected_graph_edge_chain_plus_isolated():
+    plan = Plan(
+        id="chain-plus-orphan",
+        goal="Connected chain with an orphan",
+        steps=[
+            Step(id="a", description="Start", depends_on=[]),
+            Step(
+                id="b",
+                description="Finish",
+                depends_on=["a"],
+                expected_outcome="Done",
+            ),
+            Step(id="orphan", description="Unrelated", depends_on=[]),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "DISCONNECTED_GRAPH" in _codes(result)
+    assert "ISOLATED_STEP" in _codes(result)
+    finding = next(f for f in result.findings if f.code == "DISCONNECTED_GRAPH")
+    assert finding.step_ids == ["orphan"]
+
+
+# ---------------------------------------------------------------------------
 # IRREVERSIBLE_NO_OUTCOME
 # ---------------------------------------------------------------------------
 
