@@ -168,6 +168,60 @@ def test_duplicate_dependency_positive():
 
 
 # ---------------------------------------------------------------------------
+# REDUNDANT_DEPENDENCY
+# ---------------------------------------------------------------------------
+
+def test_redundant_dependency_negative():
+    plan = Plan(
+        id="redundant-dep",
+        goal="Over-listed ancestor in depends_on",
+        steps=[
+            Step(id="gather", description="Collect sources", depends_on=[]),
+            Step(id="outline", description="Outline", depends_on=["gather"]),
+            Step(
+                id="write",
+                description="Draft summary",
+                depends_on=["gather", "outline"],
+                expected_outcome="Markdown summary ready",
+            ),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "REDUNDANT_DEPENDENCY" in _codes(result)
+    assert result.is_valid is True
+    finding = next(f for f in result.findings if f.code == "REDUNDANT_DEPENDENCY")
+    assert finding.severity == Severity.WARNING
+    assert finding.step_ids == ["write"]
+    assert "gather" in finding.message
+    assert finding.suggested_repair
+
+
+def test_redundant_dependency_positive():
+    result = validate_plan(_chain_plan())
+    assert "REDUNDANT_DEPENDENCY" not in _codes(result)
+
+
+def test_redundant_dependency_not_duplicate_only():
+    """Same id twice is DUPLICATE_DEPENDENCY, not REDUNDANT_DEPENDENCY."""
+    plan = Plan(
+        id="dup-only",
+        goal="Repeated depends_on entry",
+        steps=[
+            Step(id="gather", description="Collect sources", depends_on=[]),
+            Step(
+                id="write",
+                description="Draft summary",
+                depends_on=["gather", "gather"],
+                expected_outcome="Markdown summary ready",
+            ),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "DUPLICATE_DEPENDENCY" in _codes(result)
+    assert "REDUNDANT_DEPENDENCY" not in _codes(result)
+
+
+# ---------------------------------------------------------------------------
 # DEPENDENCY_CYCLE
 # ---------------------------------------------------------------------------
 

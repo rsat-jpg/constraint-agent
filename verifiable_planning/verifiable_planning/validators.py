@@ -36,6 +36,7 @@ def validate_plan(plan: Plan) -> ValidationResult:
     findings.extend(_check_self_dependencies(plan))
     findings.extend(_check_duplicate_dependencies(plan))
     findings.extend(_check_cycles(plan))
+    findings.extend(_check_redundant_dependencies(plan))
 
     # Graph warnings: DISCONNECTED_GRAPH owns orphans outside the largest
     # multi-node component; ISOLATED_STEP covers pure isolate bags.
@@ -146,6 +147,55 @@ def _check_duplicate_dependencies(plan: Plan) -> list[ValidationFinding]:
                 ),
                 step_ids=[step.id],
                 suggested_repair="Deduplicate depends_on so each dependency appears once.",
+            ))
+    return findings
+
+
+def _check_redundant_dependencies(plan: Plan) -> list[ValidationFinding]:
+    """
+    Flag depends_on ancestors already implied by another listed dependency.
+
+    If S lists both a and b, and there is a path a → … → b among known steps,
+    then a is redundant for S. Skipped when the known-step subgraph is not a DAG.
+    """
+    if not plan.steps:
+        return []
+    known = plan.step_ids()
+    g = build_graph(plan)
+    step_nodes = [n for n in g.nodes if n in known]
+    if len(step_nodes) < 2:
+        return []
+    subgraph = g.subgraph(step_nodes)
+    if not nx.is_directed_acyclic_graph(subgraph):
+        return []
+
+    findings = []
+    for step in plan.steps:
+        deps = [d for d in dict.fromkeys(step.depends_on) if d in known]
+        if len(deps) < 2:
+            continue
+        redundant: list[str] = []
+        for a in deps:
+            for b in deps:
+                if a == b:
+                    continue
+                if nx.has_path(subgraph, a, b):
+                    if a not in redundant:
+                        redundant.append(a)
+                    break
+        if redundant:
+            findings.append(ValidationFinding(
+                code=codes.REDUNDANT_DEPENDENCY,
+                severity=Severity.WARNING,
+                message=(
+                    f"Step '{step.id}' lists redundant depends_on id(s) {sorted(redundant)} "
+                    f"already implied by other dependencies."
+                ),
+                step_ids=[step.id],
+                suggested_repair=(
+                    "Remove transitive ancestor ids from depends_on; "
+                    "keep the immediate predecessors."
+                ),
             ))
     return findings
 

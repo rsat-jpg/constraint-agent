@@ -95,6 +95,21 @@ def main() -> None:
         ],
     )
 
+    redundant_dep = Plan(
+        id="plan-redundant-dep",
+        goal="Over-listed ancestor in depends_on",
+        steps=[
+            Step(id="gather", description="Collect sources", depends_on=[]),
+            Step(id="outline", description="Outline", depends_on=["gather"]),
+            Step(
+                id="write",
+                description="Draft summary",
+                depends_on=["gather", "outline"],
+                expected_outcome="Markdown summary ready",
+            ),
+        ],
+    )
+
     isolated = Plan(
         id="plan-isolated",
         goal="Isolated step warning",
@@ -180,6 +195,9 @@ def main() -> None:
 
     print("\n=== DUPLICATE DEPENDENCY ===")
     print_result(validate_plan(dup_dep))
+
+    print("\n=== REDUNDANT DEPENDENCY ===")
+    print_result(validate_plan(redundant_dep))
 
     print("\n=== ISOLATED STEP ===")
     print_result(validate_plan(isolated))
