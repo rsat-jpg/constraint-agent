@@ -178,6 +178,26 @@ def main() -> None:
         ],
     )
 
+    multiple_terminals = Plan(
+        id="plan-multiple-terminals",
+        goal="Fork without join",
+        steps=[
+            Step(id="gather", description="Collect sources", depends_on=[]),
+            Step(
+                id="analyze",
+                description="Analyze sources",
+                depends_on=["gather"],
+                expected_outcome="Analysis notes",
+            ),
+            Step(
+                id="write",
+                description="Draft report",
+                depends_on=["gather"],
+                expected_outcome="Report draft",
+            ),
+        ],
+    )
+
     print("=== GOOD PLAN ===")
     print_result(validate_plan(good))
 
@@ -213,6 +233,9 @@ def main() -> None:
 
     print("\n=== MISSING TERMINAL OUTCOME ===")
     print_result(validate_plan(no_terminal_outcome))
+
+    print("\n=== MULTIPLE TERMINALS ===")
+    print_result(validate_plan(multiple_terminals))
 
 
 if __name__ == "__main__":

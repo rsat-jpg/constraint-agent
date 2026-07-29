@@ -55,6 +55,7 @@ def validate_plan(plan: Plan) -> ValidationResult:
     findings.extend(_check_irreversible_without_context(plan))
     findings.extend(_check_precondition_depends_on(plan))
     findings.extend(_check_missing_terminal_outcome(plan))
+    findings.extend(_check_multiple_terminals(plan))
 
     errors = [f for f in findings if f.severity == Severity.ERROR]
     return ValidationResult(
@@ -372,3 +373,38 @@ def _check_missing_terminal_outcome(plan: Plan) -> list[ValidationFinding]:
             ),
         )]
     return []
+
+
+def _check_multiple_terminals(plan: Plan) -> list[ValidationFinding]:
+    """
+    Multi-step DAGs should usually converge on one sink.
+    Multiple terminals mean fork-without-join / ambiguous goal completion.
+    Skipped when the graph has cycles — DEPENDENCY_CYCLE owns that case.
+    """
+    if len(plan.steps) <= 1:
+        return []
+    g = build_graph(plan)
+    known = plan.step_ids()
+    step_nodes = [n for n in g.nodes if n in known]
+    if len(step_nodes) <= 1:
+        return []
+    subgraph = g.subgraph(step_nodes)
+    if not nx.is_directed_acyclic_graph(subgraph):
+        return []
+    terminals = sorted(n for n in step_nodes if subgraph.out_degree(n) == 0)
+    if len(terminals) <= 1:
+        return []
+    return [ValidationFinding(
+        code=codes.MULTIPLE_TERMINALS,
+        severity=Severity.WARNING,
+        message=(
+            f"Plan has {len(terminals)} terminal steps "
+            f"(nothing depends on them): {terminals}. "
+            f"Goal completion is ambiguous."
+        ),
+        step_ids=terminals,
+        suggested_repair=(
+            "Add a final join step that depends on these terminals, "
+            "or drop extra sinks / split into separate plans."
+        ),
+    )]

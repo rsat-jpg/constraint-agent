@@ -527,6 +527,98 @@ def test_missing_terminal_outcome_skipped_on_cycle():
 
 
 # ---------------------------------------------------------------------------
+# MULTIPLE_TERMINALS
+# ---------------------------------------------------------------------------
+
+def test_multiple_terminals_negative_fork_without_join():
+    plan = Plan(
+        id="fork",
+        goal="Fork without join",
+        steps=[
+            Step(id="gather", description="Collect sources", depends_on=[]),
+            Step(
+                id="analyze",
+                description="Analyze sources",
+                depends_on=["gather"],
+                expected_outcome="Analysis notes",
+            ),
+            Step(
+                id="write",
+                description="Draft report",
+                depends_on=["gather"],
+                expected_outcome="Report draft",
+            ),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "MULTIPLE_TERMINALS" in _codes(result)
+    assert "DISCONNECTED_GRAPH" not in _codes(result)
+    assert result.is_valid is True
+    finding = next(f for f in result.findings if f.code == "MULTIPLE_TERMINALS")
+    assert finding.severity == Severity.WARNING
+    assert finding.step_ids == ["analyze", "write"]
+    assert finding.suggested_repair
+
+
+def test_multiple_terminals_positive_chain():
+    result = validate_plan(_chain_plan())
+    assert "MULTIPLE_TERMINALS" not in _codes(result)
+
+
+def test_multiple_terminals_positive_diamond_join():
+    plan = Plan(
+        id="diamond",
+        goal="Fork then join",
+        steps=[
+            Step(id="a", description="Start", depends_on=[]),
+            Step(id="b", description="Left", depends_on=["a"]),
+            Step(id="c", description="Right", depends_on=["a"]),
+            Step(
+                id="d",
+                description="Join",
+                depends_on=["b", "c"],
+                expected_outcome="Joined result",
+            ),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "MULTIPLE_TERMINALS" not in _codes(result)
+    assert "DISCONNECTED_GRAPH" not in _codes(result)
+    assert result.is_valid is True
+
+
+def test_multiple_terminals_skipped_on_cycle():
+    plan = Plan(
+        id="cycle-skip-multi-terminal",
+        goal="Cycle owns the failure",
+        steps=[
+            Step(id="a", description="A", depends_on=["c"]),
+            Step(id="b", description="B", depends_on=["a"]),
+            Step(id="c", description="C", depends_on=["b"]),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "DEPENDENCY_CYCLE" in _codes(result)
+    assert "MULTIPLE_TERMINALS" not in _codes(result)
+
+
+def test_multiple_terminals_edge_two_isolates():
+    plan = Plan(
+        id="two-isolates",
+        goal="Two isolated steps are also multiple terminals",
+        steps=[
+            Step(id="main", description="Main", depends_on=[]),
+            Step(id="orphan", description="Orphan", depends_on=[]),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "MULTIPLE_TERMINALS" in _codes(result)
+    assert "ISOLATED_STEP" in _codes(result)
+    finding = next(f for f in result.findings if f.code == "MULTIPLE_TERMINALS")
+    assert finding.step_ids == ["main", "orphan"]
+
+
+# ---------------------------------------------------------------------------
 # Aggregate: good plan is clean
 # ---------------------------------------------------------------------------
 

@@ -79,6 +79,7 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | 8 | DISCONNECTED_GRAPH | Warn when depends_on graph has multiple weakly connected components | done 2026-07-28 |
 | 9 | Finding noise / evidence | Clarify ISOLATED_STEP vs DISCONNECTED_GRAPH ownership; centralize finding codes | done 2026-07-28 |
 | 10 | REDUNDANT_DEPENDENCY | Warn when depends_on lists an ancestor already implied by another dep | done 2026-07-28 |
+| 11 | MULTIPLE_TERMINALS | Warn when a multi-step DAG has more than one sink (fork without join) | done 2026-07-28 |
 
 Update the **Status** column when a milestone lands (`done` + date).
 

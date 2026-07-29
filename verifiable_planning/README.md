@@ -69,6 +69,7 @@ Structural validators only:
 | IRREVERSIBLE_NO_OUTCOME       | warning  | Irreversible step lacks expected_outcome                         |
 | PRECONDITION_NOT_IN_DEPENDS_ON| warning  | Precondition names a step id omitted from depends_on             |
 | MISSING_TERMINAL_OUTCOME      | warning  | No terminal step declares expected_outcome (goal-coverage proxy) |
+| MULTIPLE_TERMINALS            | warning  | Multi-step DAG has more than one sink (fork without join)        |
 
 ### Finding overlap (graph warnings)
 
@@ -76,7 +77,7 @@ Structural validators only:
 - Two or more real subgraphs (at least one component with ≥2 steps): `DISCONNECTED_GRAPH` only for steps outside the largest component.
 - Chain + orphan: `DISCONNECTED_GRAPH` owns the orphan; `ISOLATED_STEP` is suppressed for those step ids.
 - A single weakly connected component: neither graph warning.
-
+- Fork without join (one component, multiple sinks): `MULTIPLE_TERMINALS` — may also co-fire with isolate bags or disconnected multi-sink plans.
 ## Schema stability
 
 - Package version: `0.1.0` (`verifiable_planning.__version__`)
