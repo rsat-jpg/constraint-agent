@@ -74,6 +74,7 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | 3 | Richer structural rules | only after 1–2; one rule (or tight set) per commit | done 2026-07-28 |
 | 4 | Expansion gate | written criteria for LLM/PDDL/runtime adapters | done 2026-07-28 |
 | 5 | Open-source readiness | MIT LICENSE, stranger quickstart, public package exports, schema stability note | done 2026-07-28 |
+| 6 | LLM→Plan adapter (D1) | Thin optional adapter: goal + injected completer → `Plan`; core stays LLM-free | done 2026-07-28 |
 
 Update the **Status** column when a milestone lands (`done` + date).
 

@@ -68,6 +68,19 @@ def main() -> None:
         ],
     )
 
+    self_dep = Plan(
+        id="plan-self-dep",
+        goal="Step depends on itself",
+        steps=[
+            Step(
+                id="loop",
+                description="Cannot start",
+                depends_on=["loop"],
+                expected_outcome="Should never run",
+            ),
+        ],
+    )
+
     isolated = Plan(
         id="plan-isolated",
         goal="Isolated step warning",
@@ -126,6 +139,9 @@ def main() -> None:
 
     print("\n=== UNKNOWN DEPENDENCY ===")
     print_result(validate_plan(unknown_dep))
+
+    print("\n=== SELF DEPENDENCY ===")
+    print_result(validate_plan(self_dep))
 
     print("\n=== ISOLATED STEP ===")
     print_result(validate_plan(isolated))

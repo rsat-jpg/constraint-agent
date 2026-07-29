@@ -112,7 +112,17 @@ Before implementing an expansion, add a short note (in this file under **Decisio
 
 ### Decisions
 
-_None yet. Gate is open for proposals; no adapter approved._
+#### D1 — Thin LLM planner adapter (Candidate A) — 2026-07-28
+
+| Field | Answer |
+|-------|--------|
+| **Candidate / failure mode** | **A.** Hand-authored fixtures alone under-exercise Validate; LLM-shaped plans commonly emit structural defects (unknown deps, cycles, empty steps) that must be caught *before* execute. |
+| **Why structural Validate is insufficient** | Validate checks plans; it cannot *produce* candidate plans from a goal. Without a Plan emitter, the pipeline is Plan←human only. |
+| **Adapter boundary** | Core (`models`, `validators`, package `__init__`) never imports adapters or any LLM SDK. The adapter depends inward on `Plan`/`Step` only and accepts an injected `complete(prompt) -> str` callable. No API keys in core. |
+| **Success signal** | Injected fake completer returns schema-shaped JSON → `Plan`; deliberately broken payloads become `Plan`s (or parse errors) that `validate_plan` flags. Core tests pass without importing the adapter. |
+| **Rollback** | Delete `verifiable_planning/adapters/` + adapter tests + this decision + milestone row. Core contracts unchanged. |
+
+**Preconditions:** G1–G5 hold (milestones 0–5 done; contracts stable; single-purpose thin boundary).
 
 ---
 

@@ -105,6 +105,37 @@ def test_unknown_dependency_positive():
 
 
 # ---------------------------------------------------------------------------
+# SELF_DEPENDENCY
+# ---------------------------------------------------------------------------
+
+def test_self_dependency_negative():
+    plan = Plan(
+        id="self-dep",
+        goal="Step depends on itself",
+        steps=[
+            Step(
+                id="loop",
+                description="Cannot start",
+                depends_on=["loop"],
+                expected_outcome="Should never run",
+            ),
+        ],
+    )
+    result = validate_plan(plan)
+    assert result.is_valid is False
+    assert "SELF_DEPENDENCY" in _codes(result)
+    assert "DEPENDENCY_CYCLE" not in _codes(result)
+    finding = next(f for f in result.findings if f.code == "SELF_DEPENDENCY")
+    assert finding.step_ids == ["loop"]
+    assert finding.suggested_repair
+
+
+def test_self_dependency_positive():
+    result = validate_plan(_chain_plan())
+    assert "SELF_DEPENDENCY" not in _codes(result)
+
+
+# ---------------------------------------------------------------------------
 # DEPENDENCY_CYCLE
 # ---------------------------------------------------------------------------
 

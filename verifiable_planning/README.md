@@ -60,7 +60,8 @@ Structural validators only:
 | EMPTY_PLAN                    | error    | No steps present                                                 |
 | DUPLICATE_STEP_ID             | error    | Repeated step identifiers                                        |
 | UNKNOWN_DEPENDENCY            | error    | depends_on references a non-existent step                        |
-| DEPENDENCY_CYCLE              | error    | Cycle in the dependency graph                                    |
+| SELF_DEPENDENCY               | error    | Step lists its own id in depends_on                              |
+| DEPENDENCY_CYCLE              | error    | Cycle in the dependency graph (multi-node; self-loops use SELF_DEPENDENCY) |
 | ISOLATED_STEP                 | warning  | Step with no edges in a multi-step plan                          |
 | IRREVERSIBLE_NO_OUTCOME       | warning  | Irreversible step lacks expected_outcome                         |
 | PRECONDITION_NOT_IN_DEPENDS_ON| warning  | Precondition names a step id omitted from depends_on             |
@@ -86,12 +87,33 @@ verifiable_planning/                 # this project root
 ├── requirements-dev.txt
 ├── examples.py                      # Positive + deliberate failure cases
 ├── verifiable_planning/             # Installable package
-│   ├── __init__.py                  # Public exports
+│   ├── __init__.py                  # Public exports (Validate core only)
 │   ├── models.py                    # Plan, Step, findings, result
-│   └── validators.py                # Structural validators + graph
+│   ├── validators.py                # Structural validators + graph
+│   └── adapters/
+│       └── llm_planner.py           # Optional LLM→Plan (Decision D1)
 └── tests/
-    └── test_validators.py
+    ├── test_validators.py
+    └── test_llm_planner_adapter.py
 ```
+
+## Optional: LLM → Plan adapter (Decision D1)
+
+Approved in [`EXPANSION_GATE.md`](EXPANSION_GATE.md). Emits a `Plan` from a goal via an **injected** `complete(prompt) -> str` callable — no SDK in core, and `validate_plan` stays the gate.
+
+```python
+from verifiable_planning import validate_plan
+from verifiable_planning.adapters.llm_planner import plan_from_goal
+
+def complete(prompt: str) -> str:
+    # Wrap your model SDK here; must return Plan-shaped JSON.
+    ...
+
+plan = plan_from_goal("Prepare a research summary", complete)
+result = validate_plan(plan)   # always Validate separately
+```
+
+Optional extra (no pinned SDK): `pip install -e ".[llm]"`.
 
 ## Knowledge contract
 
@@ -109,20 +131,18 @@ Criteria for LLM / PDDL / runtime / multi-agent / UI work: [`EXPANSION_GATE.md`]
 
 ## Scope discipline (v0.1)
 
-- Structural validation only
-- No LLM planner
+- Structural **Validate** core stays LLM-free (no model calls inside validators)
+- Optional LLM→Plan adapter exists behind Decision D1; core `__init__` does not import it
 - No PDDL / classical planner integration
 - No multi-agent orchestration
 - No UI
 
-Expansion is governed by [`EXPANSION_GATE.md`](EXPANSION_GATE.md).  
-Do not add adapters until that gate’s preconditions and decision record are satisfied.
+Further expansion still requires a Decision in [`EXPANSION_GATE.md`](EXPANSION_GATE.md).
 
 ## Next natural increments
 
 _Only after an approved decision in `EXPANSION_GATE.md`:_
 
-- Thin LLM planner adapter that emits the Plan schema
 - Optional PDDL export / import
 - Runtime verification hooks
 

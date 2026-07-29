@@ -32,6 +32,7 @@ def validate_plan(plan: Plan) -> ValidationResult:
     findings.extend(_check_empty_plan(plan))
     findings.extend(_check_duplicate_ids(plan))
     findings.extend(_check_unknown_dependencies(plan))
+    findings.extend(_check_self_dependencies(plan))
     findings.extend(_check_cycles(plan))
     findings.extend(_check_unreachable_steps(plan))
     findings.extend(_check_irreversible_without_context(plan))
@@ -95,6 +96,21 @@ def _check_unknown_dependencies(plan: Plan) -> list[ValidationFinding]:
     return findings
 
 
+def _check_self_dependencies(plan: Plan) -> list[ValidationFinding]:
+    """A step must not list its own id in depends_on (trivial deadlock)."""
+    findings = []
+    for step in plan.steps:
+        if step.id in step.depends_on:
+            findings.append(ValidationFinding(
+                code="SELF_DEPENDENCY",
+                severity=Severity.ERROR,
+                message=f"Step '{step.id}' depends on itself.",
+                step_ids=[step.id],
+                suggested_repair="Remove the step's own id from depends_on.",
+            ))
+    return findings
+
+
 def _check_cycles(plan: Plan) -> list[ValidationFinding]:
     g = build_graph(plan)
     try:
@@ -102,9 +118,11 @@ def _check_cycles(plan: Plan) -> list[ValidationFinding]:
     except nx.NetworkXNoCycle:
         cycles = []
     if cycles:
-        # Report each unique cycle once
+        # Length-1 cycles are SELF_DEPENDENCY; report multi-node cycles here.
         reported = []
         for cycle in cycles:
+            if len(cycle) < 2:
+                continue
             cyc_str = " -> ".join(cycle + [cycle[0]])
             reported.append(ValidationFinding(
                 code="DEPENDENCY_CYCLE",

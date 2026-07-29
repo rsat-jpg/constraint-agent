@@ -14,6 +14,9 @@ dependencies = [
 dev = [
     "pytest>=7.0",
 ]
+# Adapter uses an injected completer only — no SDK pin.
+# Extra exists so installs can opt into adapter docs/tests grouping later.
+llm = []
 
 [build-system]
 requires = ["setuptools>=68"]
