@@ -81,6 +81,20 @@ def main() -> None:
         ],
     )
 
+    dup_dep = Plan(
+        id="plan-dup-dep",
+        goal="Repeated depends_on entry",
+        steps=[
+            Step(id="gather", description="Collect sources", depends_on=[]),
+            Step(
+                id="write",
+                description="Draft summary",
+                depends_on=["gather", "gather"],
+                expected_outcome="Markdown summary ready",
+            ),
+        ],
+    )
+
     isolated = Plan(
         id="plan-isolated",
         goal="Isolated step warning",
@@ -142,6 +156,9 @@ def main() -> None:
 
     print("\n=== SELF DEPENDENCY ===")
     print_result(validate_plan(self_dep))
+
+    print("\n=== DUPLICATE DEPENDENCY ===")
+    print_result(validate_plan(dup_dep))
 
     print("\n=== ISOLATED STEP ===")
     print_result(validate_plan(isolated))

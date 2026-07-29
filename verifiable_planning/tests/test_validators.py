@@ -136,6 +136,38 @@ def test_self_dependency_positive():
 
 
 # ---------------------------------------------------------------------------
+# DUPLICATE_DEPENDENCY
+# ---------------------------------------------------------------------------
+
+def test_duplicate_dependency_negative():
+    plan = Plan(
+        id="dup-dep",
+        goal="Repeated depends_on entry",
+        steps=[
+            Step(id="gather", description="Collect sources", depends_on=[]),
+            Step(
+                id="write",
+                description="Draft summary",
+                depends_on=["gather", "gather"],
+                expected_outcome="Markdown summary ready",
+            ),
+        ],
+    )
+    result = validate_plan(plan)
+    assert "DUPLICATE_DEPENDENCY" in _codes(result)
+    assert result.is_valid is True  # warning only
+    finding = next(f for f in result.findings if f.code == "DUPLICATE_DEPENDENCY")
+    assert finding.severity == Severity.WARNING
+    assert finding.step_ids == ["write"]
+    assert finding.suggested_repair
+
+
+def test_duplicate_dependency_positive():
+    result = validate_plan(_chain_plan())
+    assert "DUPLICATE_DEPENDENCY" not in _codes(result)
+
+
+# ---------------------------------------------------------------------------
 # DEPENDENCY_CYCLE
 # ---------------------------------------------------------------------------
 

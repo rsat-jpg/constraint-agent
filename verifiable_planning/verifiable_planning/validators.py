@@ -33,6 +33,7 @@ def validate_plan(plan: Plan) -> ValidationResult:
     findings.extend(_check_duplicate_ids(plan))
     findings.extend(_check_unknown_dependencies(plan))
     findings.extend(_check_self_dependencies(plan))
+    findings.extend(_check_duplicate_dependencies(plan))
     findings.extend(_check_cycles(plan))
     findings.extend(_check_unreachable_steps(plan))
     findings.extend(_check_irreversible_without_context(plan))
@@ -107,6 +108,29 @@ def _check_self_dependencies(plan: Plan) -> list[ValidationFinding]:
                 message=f"Step '{step.id}' depends on itself.",
                 step_ids=[step.id],
                 suggested_repair="Remove the step's own id from depends_on.",
+            ))
+    return findings
+
+
+def _check_duplicate_dependencies(plan: Plan) -> list[ValidationFinding]:
+    """Repeated ids in depends_on are noise (graph collapses them to one edge)."""
+    findings = []
+    for step in plan.steps:
+        seen: set[str] = set()
+        dups: list[str] = []
+        for dep in step.depends_on:
+            if dep in seen and dep not in dups:
+                dups.append(dep)
+            seen.add(dep)
+        if dups:
+            findings.append(ValidationFinding(
+                code="DUPLICATE_DEPENDENCY",
+                severity=Severity.WARNING,
+                message=(
+                    f"Step '{step.id}' lists duplicate depends_on id(s): {dups}."
+                ),
+                step_ids=[step.id],
+                suggested_repair="Deduplicate depends_on so each dependency appears once.",
             ))
     return findings
 
