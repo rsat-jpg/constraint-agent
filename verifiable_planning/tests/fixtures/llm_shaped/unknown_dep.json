@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "id": "unknown_dep",
+    "title": "Hallucinated dependency id",
+    "llm_shape_notes": "Completer invents a depends_on target that was never defined as a step",
+    "expected_codes": ["UNKNOWN_DEPENDENCY"],
+    "optional_codes": ["ISOLATED_STEP", "MULTIPLE_TERMINALS"],
+    "overlaps_notes": "Ghost dep leaves the root unwired; ISOLATED_STEP / MULTIPLE_TERMINALS may co-fire"
+  },
+  "plan": {
+    "id": "corpus-unknown-dep",
+    "goal": "Finish somehow",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "start",
+        "description": "Begin",
+        "depends_on": []
+      },
+      {
+        "id": "finish",
+        "description": "End",
+        "depends_on": ["missing_step"],
+        "expected_outcome": "Done"
+      }
+    ]
+  }
+}

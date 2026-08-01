@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "id": "self_dep",
+    "title": "Step depends on itself",
+    "llm_shape_notes": "Trivial deadlock often emitted when a model mirrors id into depends_on",
+    "expected_codes": ["SELF_DEPENDENCY"],
+    "optional_codes": [],
+    "overlaps_notes": "SELF_DEPENDENCY owns length-1 cycles; DEPENDENCY_CYCLE must not also fire"
+  },
+  "plan": {
+    "id": "corpus-self-dep",
+    "goal": "Step depends on itself",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "loop",
+        "description": "Cannot start",
+        "depends_on": ["loop"],
+        "expected_outcome": "Should never run"
+      }
+    ]
+  }
+}

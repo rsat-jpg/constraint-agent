@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "id": "cycle",
+    "title": "Multi-node dependency cycle",
+    "llm_shape_notes": "Circular depends_on among three steps",
+    "expected_codes": ["DEPENDENCY_CYCLE"],
+    "optional_codes": [],
+    "overlaps_notes": "Terminal-outcome and multiple-terminal checks skip on cycles"
+  },
+  "plan": {
+    "id": "corpus-cycle",
+    "goal": "Cyclic plan",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "a",
+        "description": "Step A",
+        "depends_on": ["c"]
+      },
+      {
+        "id": "b",
+        "description": "Step B",
+        "depends_on": ["a"]
+      },
+      {
+        "id": "c",
+        "description": "Step C",
+        "depends_on": ["b"]
+      }
+    ]
+  }
+}

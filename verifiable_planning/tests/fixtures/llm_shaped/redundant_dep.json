@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "id": "redundant_dep",
+    "title": "Transitive ancestor also listed",
+    "llm_shape_notes": "Completer over-specifies depends_on with both parent and grandparent",
+    "expected_codes": ["REDUNDANT_DEPENDENCY"],
+    "optional_codes": [],
+    "overlaps_notes": ""
+  },
+  "plan": {
+    "id": "corpus-redundant-dep",
+    "goal": "Over-listed ancestor in depends_on",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "gather",
+        "description": "Collect sources",
+        "depends_on": []
+      },
+      {
+        "id": "outline",
+        "description": "Outline",
+        "depends_on": ["gather"]
+      },
+      {
+        "id": "write",
+        "description": "Draft summary",
+        "depends_on": ["gather", "outline"],
+        "expected_outcome": "Markdown summary ready"
+      }
+    ]
+  }
+}

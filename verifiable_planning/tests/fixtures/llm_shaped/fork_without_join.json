@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "id": "fork_without_join",
+    "title": "Connected fork, never rejoins",
+    "llm_shape_notes": "Common completer pattern: parallel branches after gather with no join step",
+    "expected_codes": ["MULTIPLE_TERMINALS"],
+    "optional_codes": [],
+    "overlaps_notes": "One weakly connected component — DISCONNECTED_GRAPH must not fire"
+  },
+  "plan": {
+    "id": "corpus-fork",
+    "goal": "Fork without join",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "gather",
+        "description": "Collect sources",
+        "depends_on": []
+      },
+      {
+        "id": "analyze",
+        "description": "Analyze sources",
+        "depends_on": ["gather"],
+        "expected_outcome": "Analysis notes"
+      },
+      {
+        "id": "write",
+        "description": "Draft report",
+        "depends_on": ["gather"],
+        "expected_outcome": "Report draft"
+      }
+    ]
+  }
+}

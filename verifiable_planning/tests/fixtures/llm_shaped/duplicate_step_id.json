@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "id": "duplicate_step_id",
+    "title": "Repeated step identifiers",
+    "llm_shape_notes": "Completer reuses the same step id for two different actions",
+    "expected_codes": ["DUPLICATE_STEP_ID"],
+    "optional_codes": ["ISOLATED_STEP", "MISSING_TERMINAL_OUTCOME"],
+    "overlaps_notes": "Graph collapses duplicate ids to one node; secondary warnings may co-fire"
+  },
+  "plan": {
+    "id": "corpus-duplicate-step-id",
+    "goal": "Duplicate ids",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "a",
+        "description": "First A",
+        "depends_on": []
+      },
+      {
+        "id": "a",
+        "description": "Second A",
+        "depends_on": []
+      }
+    ]
+  }
+}

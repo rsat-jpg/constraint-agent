@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "id": "irreversible_no_outcome",
+    "title": "Irreversible step lacks expected_outcome",
+    "llm_shape_notes": "Destructive step emitted without a reviewable success description",
+    "expected_codes": ["IRREVERSIBLE_NO_OUTCOME"],
+    "optional_codes": [],
+    "overlaps_notes": "Terminal carries outcome so MISSING_TERMINAL_OUTCOME stays quiet"
+  },
+  "plan": {
+    "id": "corpus-irreversible",
+    "goal": "Irreversible without outcome description",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "gather",
+        "description": "Collect targets",
+        "depends_on": []
+      },
+      {
+        "id": "delete",
+        "description": "Delete production data",
+        "depends_on": ["gather"],
+        "is_irreversible": true
+      },
+      {
+        "id": "done",
+        "description": "Confirm deletion",
+        "depends_on": ["delete"],
+        "expected_outcome": "Deletion confirmed"
+      }
+    ]
+  }
+}

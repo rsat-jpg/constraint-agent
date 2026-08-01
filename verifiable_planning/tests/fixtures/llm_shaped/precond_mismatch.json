@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "id": "precond_mismatch",
+    "title": "Precondition step id omitted from depends_on",
+    "llm_shape_notes": "Model names a prior step in preconditions but forgets the graph edge",
+    "expected_codes": ["PRECONDITION_NOT_IN_DEPENDS_ON"],
+    "optional_codes": ["ISOLATED_STEP", "MULTIPLE_TERMINALS"],
+    "overlaps_notes": "Unwired steps also look isolated; primary signal is PRECONDITION_NOT_IN_DEPENDS_ON"
+  },
+  "plan": {
+    "id": "corpus-precond",
+    "goal": "Precondition without depends_on edge",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "gather",
+        "description": "Collect sources",
+        "depends_on": []
+      },
+      {
+        "id": "extract",
+        "description": "Extract claims",
+        "depends_on": [],
+        "preconditions": ["gather"],
+        "expected_outcome": "Claim list"
+      }
+    ]
+  }
+}

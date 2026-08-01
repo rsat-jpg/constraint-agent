@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "id": "duplicate_dep",
+    "title": "Repeated depends_on id",
+    "llm_shape_notes": "Same prerequisite listed twice in depends_on",
+    "expected_codes": ["DUPLICATE_DEPENDENCY"],
+    "optional_codes": [],
+    "overlaps_notes": ""
+  },
+  "plan": {
+    "id": "corpus-duplicate-dep",
+    "goal": "Repeated depends_on entry",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "gather",
+        "description": "Collect sources",
+        "depends_on": []
+      },
+      {
+        "id": "write",
+        "description": "Draft summary",
+        "depends_on": ["gather", "gather"],
+        "expected_outcome": "Markdown summary ready"
+      }
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "id": "clean_chain",
+    "title": "Well-formed single chain",
+    "llm_shape_notes": "Completer emits a linear gather→extract→write plan with terminal outcome",
+    "expected_codes": [],
+    "optional_codes": [],
+    "overlaps_notes": ""
+  },
+  "plan": {
+    "id": "corpus-clean",
+    "goal": "Produce a research summary",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "gather",
+        "description": "Collect sources",
+        "depends_on": []
+      },
+      {
+        "id": "extract",
+        "description": "Extract claims",
+        "depends_on": ["gather"]
+      },
+      {
+        "id": "write",
+        "description": "Write summary",
+        "depends_on": ["extract"],
+        "expected_outcome": "Structured markdown summary"
+      }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "id": "isolate_bag",
+    "title": "Pure isolate bag",
+    "llm_shape_notes": "Two steps with no edges — common when a model lists tasks without wiring depends_on",
+    "expected_codes": ["ISOLATED_STEP", "MULTIPLE_TERMINALS"],
+    "optional_codes": [],
+    "overlaps_notes": "ISOLATED_STEP owns pure isolate bags; DISCONNECTED_GRAPH must not fire"
+  },
+  "plan": {
+    "id": "corpus-isolate-bag",
+    "goal": "Isolated steps",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "main",
+        "description": "Main work",
+        "depends_on": [],
+        "expected_outcome": "Main done"
+      },
+      {
+        "id": "orphan",
+        "description": "Orphaned step",
+        "depends_on": [],
+        "expected_outcome": "Orphan done"
+      }
+    ]
+  }
+}

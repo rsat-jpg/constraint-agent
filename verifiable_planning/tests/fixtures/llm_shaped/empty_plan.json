@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "id": "empty_plan",
+    "title": "Plan with no steps",
+    "llm_shape_notes": "Completer returns a goal shell with an empty steps array",
+    "expected_codes": ["EMPTY_PLAN"],
+    "optional_codes": [],
+    "overlaps_notes": ""
+  },
+  "plan": {
+    "id": "corpus-empty",
+    "goal": "Nothing planned",
+    "version": "0.1.0",
+    "steps": []
+  }
+}

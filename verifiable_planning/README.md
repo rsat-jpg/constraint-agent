@@ -92,6 +92,7 @@ verifiable_planning/                 # this project root
 ├── KNOWLEDGE_RUBRIC.md              # Governing knowledge contract
 ├── COMMIT_PROTOCOL.md               # Commit cadence and milestones
 ├── EXPANSION_GATE.md                # When / when-not to add adapters
+├── EVIDENCE_CORPUS.md               # LLM-shaped fixture matrix (high-signal proof)
 ├── README.md
 ├── pyproject.toml
 ├── requirements.txt
@@ -104,9 +105,17 @@ verifiable_planning/                 # this project root
 │   └── adapters/
 │       └── llm_planner.py           # Optional LLM→Plan (Decision D1)
 └── tests/
+    ├── corpus_loader.py
+    ├── fixtures/llm_shaped/         # Evidence corpus JSON plans
     ├── test_validators.py
-    └── test_llm_planner_adapter.py
+    ├── test_llm_planner_adapter.py
+    └── test_evidence_corpus.py
 ```
+
+## Evidence corpus
+
+LLM-shaped plan fixtures with expected finding codes and documented overlaps: [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md).  
+Run: `python3 -m pytest -q tests/test_evidence_corpus.py` (no live model).
 
 ## Optional: LLM → Plan adapter (Decision D1)
 

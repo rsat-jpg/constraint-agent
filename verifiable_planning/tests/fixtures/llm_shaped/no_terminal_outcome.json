@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "id": "no_terminal_outcome",
+    "title": "No terminal expected_outcome",
+    "llm_shape_notes": "Chain completes without stating what success looks like on the sink",
+    "expected_codes": ["MISSING_TERMINAL_OUTCOME"],
+    "optional_codes": [],
+    "overlaps_notes": ""
+  },
+  "plan": {
+    "id": "corpus-no-terminal-outcome",
+    "goal": "Steps without a stated terminal outcome",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "a",
+        "description": "Step A",
+        "depends_on": []
+      },
+      {
+        "id": "b",
+        "description": "Step B",
+        "depends_on": ["a"]
+      }
+    ]
+  }
+}

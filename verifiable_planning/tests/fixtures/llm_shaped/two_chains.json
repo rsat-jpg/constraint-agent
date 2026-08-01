@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "id": "two_chains",
+    "title": "Two separate workstreams",
+    "llm_shape_notes": "Completer emits parallel chains that never join into one graph",
+    "expected_codes": ["DISCONNECTED_GRAPH", "MULTIPLE_TERMINALS"],
+    "optional_codes": [],
+    "overlaps_notes": "DISCONNECTED_GRAPH + MULTIPLE_TERMINALS; ISOLATED_STEP must not fire (steps have edges)"
+  },
+  "plan": {
+    "id": "corpus-two-chains",
+    "goal": "Two separate workstreams",
+    "version": "0.1.0",
+    "steps": [
+      {
+        "id": "a",
+        "description": "Chain A start",
+        "depends_on": []
+      },
+      {
+        "id": "b",
+        "description": "Chain A end",
+        "depends_on": ["a"],
+        "expected_outcome": "A done"
+      },
+      {
+        "id": "c",
+        "description": "Chain C start",
+        "depends_on": []
+      },
+      {
+        "id": "d",
+        "description": "Chain C end",
+        "depends_on": ["c"],
+        "expected_outcome": "C done"
+      }
+    ]
+  }
+}
