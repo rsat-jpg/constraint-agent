@@ -4,7 +4,7 @@ Deterministic proof that the v0.1 structural Validate surface stays **high-signa
 
 Companion to Expansion Gate G2 and Decision D1. No live model, no network.
 
-Last updated: 2026-07-31
+Last updated: 2026-08-01
 
 ---
 
@@ -13,6 +13,7 @@ Last updated: 2026-07-31
 - Exercise every current finding code with inspectable fixtures
 - Record **expected** fires and **known overlaps** (optional codes)
 - Keep Plan→Validate separable: fixtures are static JSON; two also round-trip through `plan_from_llm_text`
+- Back the **v0.1 Validate surface freeze** (README): this corpus is the measurable evidence for the frozen 13-code set
 
 ## How to run
 
@@ -68,5 +69,6 @@ Fixtures `clean_chain` and `unknown_dep` also serialize `plan` → `plan_from_ll
 
 ## Maintenance
 
-When adding a finding code: add or extend a fixture, update this table, keep `test_corpus_covers_all_finding_codes` green.  
+Under the v0.1 freeze, **do not add finding codes** without an explicit unfreeze / package version bump (see README).  
+If the surface is expanded later: add or extend a fixture, update this table, keep `test_corpus_covers_all_finding_codes` and `test_surface_freeze` green.  
 When ownership/overlap rules change: update `optional_codes` / notes — prefer a dedicated commit over silent corpus edits mixed with validator changes.

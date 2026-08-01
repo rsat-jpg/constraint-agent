@@ -1,7 +1,7 @@
 # Knowledge Rubric — Verifiable Planning Build
 
 Governing knowledge contract for the Plan-Validate-Execute core and its purposes.
-Last updated: 2026-07-28
+Last updated: 2026-08-01
 
 ## 1. Domain Understanding
 
@@ -55,9 +55,9 @@ Last updated: 2026-07-28
 
 ## 7. Living Knowledge Gaps
 
-- Exact boundary of what pure structural validation can reliably catch
-- Minimal powerful set of validation rules
-- Clean schema for "finding + suggested repair" (v0.1 shape exists; may refine with use)
+- ~~Exact boundary of what pure structural validation can reliably catch~~ → **partial for v0.1:** [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md) + surface freeze document fires/overlaps; semantic and runtime correctness remain out of scope
+- ~~Minimal powerful set of validation rules~~ → **closed for v0.1 product line:** 13 finding codes frozen for `0.1.x` (product judgment + corpus evidence, not a claim of global optimality)
+- Clean schema for "finding + suggested repair" (v0.1 shape exists and is stable for `0.1.x`; may still refine on a later version line)
 - ~~Packaging and documentation practices that make an open-source release actually usable~~ → MIT LICENSE, package exports, README quickstart (v0.1)
 - ~~When structural verification should hand off to semantic or formal methods~~ → see [`EXPANSION_GATE.md`](EXPANSION_GATE.md)
 

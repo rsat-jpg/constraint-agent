@@ -78,17 +78,29 @@ Structural validators only:
 - Chain + orphan: `DISCONNECTED_GRAPH` owns the orphan; `ISOLATED_STEP` is suppressed for those step ids.
 - A single weakly connected component: neither graph warning.
 - Fork without join (one component, multiple sinks): `MULTIPLE_TERMINALS` — may also co-fire with isolate bags or disconnected multi-sink plans.
-## Schema stability
+
+## Schema stability & Validate surface freeze
 
 - Package version: `0.1.0` (`verifiable_planning.__version__`)
 - Plan schema version field: `Plan.version` defaults to `"0.1.0"` (`SCHEMA_VERSION`)
-- Within **0.1.x**, public models (`Plan`, `Step`, `ValidationFinding`, `ValidationResult`) and `validate_plan` keep additive-compatible shapes. Breaking field or finding-code changes bump the version and are called out in the commit message.
+- Within **0.1.x**, public models (`Plan`, `Step`, `ValidationFinding`, `ValidationResult`) and `validate_plan` / `build_graph` keep additive-compatible shapes.
+
+**Validate surface freeze (v0.1):** the **13** finding codes in [`verifiable_planning/finding_codes.py`](verifiable_planning/finding_codes.py) (and their error vs warning severity classes) are the stable structural Validate contract for `0.1.x`. Coverage and known overlaps are locked in [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md); an invariant test refuses silent code-set drift.
+
+| Frozen for `0.1.x` | Still allowed in `0.1.x` |
+|--------------------|-------------------------|
+| Those 13 finding code strings + severity classes | Docs, examples, evidence fixtures, tests that do not change Validate outcomes |
+| Public Validate API shapes (additive-compatible only) | Bug fixes that restore documented intent (`fix:` + evidence) |
+| Default: **no new finding codes** | Thin adapters only behind an [`EXPANSION_GATE.md`](EXPANSION_GATE.md) Decision |
+
+**Unfreeze:** new finding code, severity flip, or breaking model field → bump package version (prefer `0.2.0` for surface expansion; `0.1.x` patch only for true bug fixes that do not expand the surface) and call it out in the commit message. Known finding overlaps are documented, not “fixed,” under this freeze.
 
 ## Project layout
 
 ```
 verifiable_planning/                 # this project root
 ├── LICENSE
+├── CHANGELOG.md                     # Release / freeze notes
 ├── KNOWLEDGE_RUBRIC.md              # Governing knowledge contract
 ├── COMMIT_PROTOCOL.md               # Commit cadence and milestones
 ├── EXPANSION_GATE.md                # When / when-not to add adapters
@@ -101,6 +113,7 @@ verifiable_planning/                 # this project root
 ├── verifiable_planning/             # Installable package
 │   ├── __init__.py                  # Public exports (Validate core only)
 │   ├── models.py                    # Plan, Step, findings, result
+│   ├── finding_codes.py             # Frozen 0.1.x finding code strings
 │   ├── validators.py                # Structural validators + graph
 │   └── adapters/
 │       └── llm_planner.py           # Optional LLM→Plan (Decision D1)
@@ -109,7 +122,8 @@ verifiable_planning/                 # this project root
     ├── fixtures/llm_shaped/         # Evidence corpus JSON plans
     ├── test_validators.py
     ├── test_llm_planner_adapter.py
-    └── test_evidence_corpus.py
+    ├── test_evidence_corpus.py
+    └── test_surface_freeze.py       # 0.1.x finding-code set lock
 ```
 
 ## Evidence corpus
@@ -161,12 +175,16 @@ Further expansion still requires a Decision in [`EXPANSION_GATE.md`](EXPANSION_G
 
 ## Next natural increments
 
+The v0.1 structural Validate surface is **frozen** (see above). Default next work is **not** another finding code.
+
 _Only after an approved decision in `EXPANSION_GATE.md`:_
 
 - Optional PDDL export / import
 - Runtime verification hooks
 
-Still inside Validate (no gate decision required): one tighter structural rule family at a time.
+_Or after an explicit unfreeze / version bump:_
+
+- New structural finding codes or severity/ownership retunes (including overlap coalescing)
 
 ## License
 

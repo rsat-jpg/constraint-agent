@@ -3,7 +3,7 @@
 Cadence and rules for when (and when not) to commit.  
 Companion to [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md).
 
-Last updated: 2026-07-28
+Last updated: 2026-08-01
 
 ---
 
@@ -22,7 +22,7 @@ Each commit should be justifiable against the knowledge rubric and leave the tre
 | **Validator added/changed** | New structural check + failure case | `feat: add <CODE> structural validator` |
 | **Schema change** | Plan/Finding/Result fields that affect contracts | `feat:` / `fix:` — note schema version impact |
 | **Evidence locked** | Tests that cover pos+neg for a validator | `test: cover <CODE> positive and negative cases` |
-| **Docs contract change** | Rubric, scope, or protocol updates that bind the build | `docs: update knowledge contract / commit protocol` |
+| **Docs contract change** | Rubric, scope, freeze policy, or protocol updates that bind the build | `docs: update knowledge contract / commit protocol` |
 | **Packaging** | `requirements.txt`, `pyproject.toml`, license | `chore: add install/packaging surface` |
 | **Bugfix** | Validator false positive/negative with repro | `fix: <what was wrong and why>` |
 
@@ -81,6 +81,7 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | 10 | REDUNDANT_DEPENDENCY | Warn when depends_on lists an ancestor already implied by another dep | done 2026-07-28 |
 | 11 | MULTIPLE_TERMINALS | Warn when a multi-step DAG has more than one sink (fork without join) | done 2026-07-28 |
 | 12 | Evidence corpus | LLM-shaped fixtures + expected codes / overlaps matrix (no new rules) | done 2026-07-31 |
+| 13 | v0.1 Validate surface freeze | Freeze 13 finding codes for 0.1.x; policy docs + lock test; no new rules | done 2026-08-01 |
 
 Update the **Status** column when a milestone lands (`done` + date).
 

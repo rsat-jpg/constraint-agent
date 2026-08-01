@@ -2,6 +2,10 @@
 Stable finding code strings for structural Validate.
 
 Internal module — not re-exported from package ``__init__``.
+
+The set of code strings below is **frozen for package 0.1.x**.
+Do not add, rename, or remove codes without an explicit unfreeze /
+version-bump decision (see README: Schema stability & Validate surface freeze).
 """
 
 EMPTY_PLAN = "EMPTY_PLAN"
