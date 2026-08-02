@@ -3,7 +3,7 @@
 Cadence and rules for when (and when not) to commit.  
 Companion to [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md).
 
-Last updated: 2026-08-01
+Last updated: 2026-08-02
 
 ---
 
@@ -82,6 +82,7 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | 11 | MULTIPLE_TERMINALS | Warn when a multi-step DAG has more than one sink (fork without join) | done 2026-07-28 |
 | 12 | Evidence corpus | LLM-shaped fixtures + expected codes / overlaps matrix (no new rules) | done 2026-07-31 |
 | 13 | v0.1 Validate surface freeze | Freeze 13 finding codes for 0.1.x; policy docs + lock test; no new rules | done 2026-08-01 |
+| 14 | Runtime verify adapter (D2) | Thin `verify_trace` + `linear_trace`; `RUNTIME_*` codes; structural freeze intact | done 2026-08-02 |
 
 Update the **Status** column when a milestone lands (`done` + date).
 

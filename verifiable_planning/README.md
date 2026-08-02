@@ -85,15 +85,15 @@ Structural validators only:
 - Plan schema version field: `Plan.version` defaults to `"0.1.0"` (`SCHEMA_VERSION`)
 - Within **0.1.x**, public models (`Plan`, `Step`, `ValidationFinding`, `ValidationResult`) and `validate_plan` / `build_graph` keep additive-compatible shapes.
 
-**Validate surface freeze (v0.1):** the **13** finding codes in [`verifiable_planning/finding_codes.py`](verifiable_planning/finding_codes.py) (and their error vs warning severity classes) are the stable structural Validate contract for `0.1.x`. Coverage and known overlaps are locked in [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md); an invariant test refuses silent code-set drift.
+**Validate surface freeze (v0.1):** the **13 structural** finding codes in [`verifiable_planning/finding_codes.py`](verifiable_planning/finding_codes.py) (and their error vs warning severity classes) are the stable structural Validate contract for `0.1.x`. Coverage and known overlaps are locked in [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md); an invariant test refuses silent code-set drift. Optional adapter namespaces (e.g. `RUNTIME_*` behind Decision D2) are **not** part of this frozen structural set.
 
 | Frozen for `0.1.x` | Still allowed in `0.1.x` |
 |--------------------|-------------------------|
-| Those 13 finding code strings + severity classes | Docs, examples, evidence fixtures, tests that do not change Validate outcomes |
+| Those 13 structural finding code strings + severity classes | Docs, examples, evidence fixtures, tests that do not change Validate outcomes |
 | Public Validate API shapes (additive-compatible only) | Bug fixes that restore documented intent (`fix:` + evidence) |
-| Default: **no new finding codes** | Thin adapters only behind an [`EXPANSION_GATE.md`](EXPANSION_GATE.md) Decision |
+| Default: **no new structural finding codes** | Thin adapters only behind an [`EXPANSION_GATE.md`](EXPANSION_GATE.md) Decision (may use separate code namespaces) |
 
-**Unfreeze:** new finding code, severity flip, or breaking model field → bump package version (prefer `0.2.0` for surface expansion; `0.1.x` patch only for true bug fixes that do not expand the surface) and call it out in the commit message. Known finding overlaps are documented, not “fixed,” under this freeze.
+**Unfreeze (structural):** new structural finding code, severity flip, or breaking model field → bump package version (prefer `0.2.0` for surface expansion; `0.1.x` patch only for true bug fixes that do not expand the surface) and call it out in the commit message. Known finding overlaps are documented, not “fixed,” under this freeze.
 
 ## Project layout
 
@@ -116,14 +116,16 @@ verifiable_planning/                 # this project root
 │   ├── finding_codes.py             # Frozen 0.1.x finding code strings
 │   ├── validators.py                # Structural validators + graph
 │   └── adapters/
-│       └── llm_planner.py           # Optional LLM→Plan (Decision D1)
+│       ├── llm_planner.py           # Optional LLM→Plan (Decision D1)
+│       └── runtime_verify.py        # Optional trace verify (Decision D2)
 └── tests/
     ├── corpus_loader.py
     ├── fixtures/llm_shaped/         # Evidence corpus JSON plans
     ├── test_validators.py
     ├── test_llm_planner_adapter.py
     ├── test_evidence_corpus.py
-    └── test_surface_freeze.py       # 0.1.x finding-code set lock
+    ├── test_surface_freeze.py       # 0.1.x structural finding-code set lock
+    └── test_runtime_verify_adapter.py
 ```
 
 ## Evidence corpus
@@ -149,6 +151,26 @@ result = validate_plan(plan)   # always Validate separately
 
 Optional extra (no pinned SDK): `pip install -e ".[llm]"`.
 
+## Optional: runtime trace verification (Decision D2)
+
+Approved in [`EXPANSION_GATE.md`](EXPANSION_GATE.md). Compares an inspectable step-event stream to plan `depends_on` order. Structural `validate_plan` stays the offline gate; runtime codes use the `RUNTIME_*` namespace.
+
+```python
+from verifiable_planning import validate_plan
+from verifiable_planning.adapters.runtime_verify import linear_trace, verify_trace
+
+plan = ...  # structurally sound Plan
+assert validate_plan(plan).is_valid
+
+events = linear_trace(plan)          # demo/test emitter (topo start/complete)
+# or inject events from your executor
+result = verify_trace(plan, events)
+print(result.is_valid, [f.code for f in result.findings])
+```
+
+Checks (v1): `RUNTIME_UNKNOWN_STEP`, `RUNTIME_DEPENDENCY_ORDER`, `RUNTIME_INCOMPLETE`.  
+Optional extra: `pip install -e ".[runtime]"`.
+
 ## Knowledge contract
 
 All design decisions are governed by [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md).  
@@ -167,6 +189,7 @@ Criteria for LLM / PDDL / runtime / multi-agent / UI work: [`EXPANSION_GATE.md`]
 
 - Structural **Validate** core stays LLM-free (no model calls inside validators)
 - Optional LLM→Plan adapter exists behind Decision D1; core `__init__` does not import it
+- Optional runtime trace verify exists behind Decision D2; core `__init__` does not import it
 - No PDDL / classical planner integration
 - No multi-agent orchestration
 - No UI
@@ -175,14 +198,17 @@ Further expansion still requires a Decision in [`EXPANSION_GATE.md`](EXPANSION_G
 
 ## Next natural increments
 
-The v0.1 structural Validate surface is **frozen** (see above). Default next work is **not** another finding code.
+The v0.1 structural Validate surface is **frozen** (see above). Default next work is **not** another structural finding code.
 
 _Only after an approved decision in `EXPANSION_GATE.md`:_
 
 - Optional PDDL export / import
-- Runtime verification hooks
 
-_Or after an explicit unfreeze / version bump:_
+_Or deepen Decision D2 (still adapter-side):_
+
+- Irreversible/checkpoint runtime checks; richer event producers
+
+_Or after an explicit structural unfreeze / version bump:_
 
 - New structural finding codes or severity/ownership retunes (including overlap coalescing)
 

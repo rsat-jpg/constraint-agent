@@ -3,7 +3,7 @@
 Written criteria for adding capabilities after the v0.1 Validate core.  
 Companion to [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md) and [`COMMIT_PROTOCOL.md`](COMMIT_PROTOCOL.md).
 
-Last updated: 2026-07-28
+Last updated: 2026-08-02
 
 ---
 
@@ -123,6 +123,18 @@ Before implementing an expansion, add a short note (in this file under **Decisio
 | **Rollback** | Delete `verifiable_planning/adapters/` + adapter tests + this decision + milestone row. Core contracts unchanged. |
 
 **Preconditions:** G1–G5 hold (milestones 0–5 done; contracts stable; single-purpose thin boundary).
+
+#### D2 — Thin runtime verification adapter (Candidate C) — 2026-08-02
+
+| Field | Answer |
+|-------|--------|
+| **Candidate / failure mode** | **C.** Plans that pass structural Validate can still execute out of dependency order, skip steps, or emit events for unknown steps — silent Execute drift. |
+| **Why structural Validate is insufficient** | Validate is offline over `Plan` only; it cannot observe an execution trace. |
+| **Adapter boundary** | Core (`models`, `validators`, frozen `finding_codes`, package `__init__`) never imports runtime adapters. The adapter depends inward on `Plan` + `ValidationFinding` / `ValidationResult` only. Events are injected as a list or produced by demo/test `linear_trace(plan)`. Runtime codes use the `RUNTIME_*` namespace and are **not** added to the frozen structural code set. |
+| **Success signal** | `linear_trace` on a clean chain → no RUNTIME errors; hand-crafted out-of-order / unknown / incomplete traces produce expected `RUNTIME_*` findings. Structural tests + surface freeze lock stay green without core importing the adapter. |
+| **Rollback** | Delete `adapters/runtime_verify.py` (+ optional `runtime_codes.py`) + runtime adapter tests + this decision + milestone row. Core contracts unchanged. |
+
+**Preconditions:** G1–G5 hold (milestones through v0.1 surface freeze / evidence corpus; contracts stable; single-purpose thin boundary).
 
 ---
 

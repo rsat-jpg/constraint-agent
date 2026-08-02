@@ -17,6 +17,8 @@ dev = [
 # Adapter uses an injected completer only — no SDK pin.
 # Extra exists so installs can opt into adapter docs/tests grouping later.
 llm = []
+# Runtime verify uses injected/fixture event lists only — no executor pin.
+runtime = []
 
 [build-system]
 requires = ["setuptools>=68"]
