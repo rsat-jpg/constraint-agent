@@ -46,6 +46,7 @@ Or run the bundled demos and tests:
 
 ```bash
 python3 examples.py
+python3 examples_runtime.py
 python3 -m pytest -q
 ```
 
@@ -109,7 +110,8 @@ verifiable_planning/                 # this project root
 ├── pyproject.toml
 ├── requirements.txt
 ├── requirements-dev.txt
-├── examples.py                      # Positive + deliberate failure cases
+├── examples.py                      # Positive + deliberate failure cases (Validate)
+├── examples_runtime.py              # Plan → Validate → Runtime demo (Decision D2)
 ├── verifiable_planning/             # Installable package
 │   ├── __init__.py                  # Public exports (Validate core only)
 │   ├── models.py                    # Plan, Step, findings, result
@@ -169,6 +171,7 @@ print(result.is_valid, [f.code for f in result.findings])
 ```
 
 Checks (v1): `RUNTIME_UNKNOWN_STEP`, `RUNTIME_DEPENDENCY_ORDER`, `RUNTIME_INCOMPLETE`.  
+Runnable demo: `python3 examples_runtime.py` (happy path + deliberate `RUNTIME_DEPENDENCY_ORDER` failure).  
 Optional extra: `pip install -e ".[runtime]"`.
 
 ## Knowledge contract

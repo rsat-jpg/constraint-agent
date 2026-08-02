@@ -55,7 +55,7 @@ Last updated: 2026-08-02
 
 ## 7. Living Knowledge Gaps
 
-- ~~Exact boundary of what pure structural validation can reliably catch~~ → **partial for v0.1:** [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md) + surface freeze document fires/overlaps; thin runtime trace checks exist behind Decision D2 (`RUNTIME_*`) but are not a full executor
+- ~~Exact boundary of what pure structural validation can reliably catch~~ → **partial for v0.1:** [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md) + surface freeze document fires/overlaps; thin runtime trace checks exist behind Decision D2 (`RUNTIME_*`) with a stranger-runnable demo (`examples_runtime.py`) but are not a full executor
 - ~~Minimal powerful set of validation rules~~ → **closed for v0.1 product line:** 13 finding codes frozen for `0.1.x` (product judgment + corpus evidence, not a claim of global optimality)
 - Clean schema for "finding + suggested repair" (v0.1 shape exists and is stable for `0.1.x`; may still refine on a later version line)
 - ~~Packaging and documentation practices that make an open-source release actually usable~~ → MIT LICENSE, package exports, README quickstart (v0.1)

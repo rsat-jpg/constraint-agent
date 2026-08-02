@@ -31,7 +31,7 @@ Each commit should be justifiable against the knowledge rubric and leave the tre
 ## Do not commit
 
 - Half-finished validators with no pos+neg evidence
-- Experiments that break `python3 examples.py`
+- Experiments that break `python3 examples.py` or `python3 examples_runtime.py`
 - Scope leaks (LLM, PDDL, multi-agent, UI) without an explicit expansion decision recorded in the rubric or a short decision note
 - Secrets, credentials, local env files
 - Generated noise (`__pycache__/`, `.venv/`, `.pytest_cache/`)
@@ -44,9 +44,10 @@ Before every commit:
 
 1. **Essential rubric rows** still hold for the touched area.
 2. `python3 examples.py` runs from `verifiable_planning/` (good plan VALID; deliberate failures still produce expected findings).
-3. If a validator changed: at least one positive and one negative case exist (examples and/or tests).
-4. Diff is one logical increment — split unrelated changes.
-5. Message explains **why**, not a file list.
+3. `python3 examples_runtime.py` runs from `verifiable_planning/` (structural VALID → happy runtime VALID; deliberate runtime failure shows `RUNTIME_DEPENDENCY_ORDER`).
+4. If a validator changed: at least one positive and one negative case exist (examples and/or tests).
+5. Diff is one logical increment — split unrelated changes.
+6. Message explains **why**, not a file list.
 
 ---
 
@@ -83,6 +84,7 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | 12 | Evidence corpus | LLM-shaped fixtures + expected codes / overlaps matrix (no new rules) | done 2026-07-31 |
 | 13 | v0.1 Validate surface freeze | Freeze 13 finding codes for 0.1.x; policy docs + lock test; no new rules | done 2026-08-01 |
 | 14 | Runtime verify adapter (D2) | Thin `verify_trace` + `linear_trace`; `RUNTIME_*` codes; structural freeze intact | done 2026-08-02 |
+| 15 | Runtime e2e demo | `examples_runtime.py` + docs: Plan → Validate → Runtime happy path + deliberate failure; no new Decision/codes | done 2026-08-02 |
 
 Update the **Status** column when a milestone lands (`done` + date).
 
