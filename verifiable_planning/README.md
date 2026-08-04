@@ -47,6 +47,7 @@ Or run the bundled demos and tests:
 ```bash
 python3 examples.py
 python3 examples_runtime.py
+python3 examples_llm.py
 python3 -m pytest -q
 ```
 
@@ -112,6 +113,7 @@ verifiable_planning/                 # this project root
 ├── requirements-dev.txt
 ├── examples.py                      # Positive + deliberate failure cases (Validate)
 ├── examples_runtime.py              # Plan → Validate → Runtime demo (Decision D2)
+├── examples_llm.py                  # Goal → Plan → Validate demo (Decision D1)
 ├── verifiable_planning/             # Installable package
 │   ├── __init__.py                  # Public exports (Validate core only)
 │   ├── models.py                    # Plan, Step, findings, result
@@ -151,6 +153,7 @@ plan = plan_from_goal("Prepare a research summary", complete)
 result = validate_plan(plan)   # always Validate separately
 ```
 
+Runnable demo: `python3 examples_llm.py` (fake completer happy path + deliberate `UNKNOWN_DEPENDENCY` failure; no API keys).  
 Optional extra (no pinned SDK): `pip install -e ".[llm]"`.
 
 ## Optional: runtime trace verification (Decision D2)
