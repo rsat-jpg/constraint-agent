@@ -3,7 +3,7 @@
 Written criteria for adding capabilities after the v0.1 Validate core.  
 Companion to [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md) and [`COMMIT_PROTOCOL.md`](COMMIT_PROTOCOL.md).
 
-Last updated: 2026-08-02
+Last updated: 2026-08-04
 
 ---
 
@@ -126,13 +126,17 @@ Before implementing an expansion, add a short note (in this file under **Decisio
 
 #### D2 — Thin runtime verification adapter (Candidate C) — 2026-08-02
 
+Amended 2026-08-04: irreversible/checkpoint check (still Candidate C / D2 — no new Decision).
+
 | Field | Answer |
 |-------|--------|
-| **Candidate / failure mode** | **C.** Plans that pass structural Validate can still execute out of dependency order, skip steps, or emit events for unknown steps — silent Execute drift. |
-| **Why structural Validate is insufficient** | Validate is offline over `Plan` only; it cannot observe an execution trace. |
+| **Candidate / failure mode** | **C.** Plans that pass structural Validate can still execute out of dependency order, skip steps, emit events for unknown steps, or start an `is_irreversible` step without a prior per-step checkpoint — silent Execute drift. |
+| **Why structural Validate is insufficient** | Validate is offline over `Plan` only; it cannot observe an execution trace. Structural `IRREVERSIBLE_NO_OUTCOME` only warns on missing `expected_outcome`; it does not see whether a checkpoint event occurred before execution. |
 | **Adapter boundary** | Core (`models`, `validators`, frozen `finding_codes`, package `__init__`) never imports runtime adapters. The adapter depends inward on `Plan` + `ValidationFinding` / `ValidationResult` only. Events are injected as a list or produced by demo/test `linear_trace(plan)`. Runtime codes use the `RUNTIME_*` namespace and are **not** added to the frozen structural code set. |
-| **Success signal** | `linear_trace` on a clean chain → no RUNTIME errors; hand-crafted out-of-order / unknown / incomplete traces produce expected `RUNTIME_*` findings. Structural tests + surface freeze lock stay green without core importing the adapter. |
+| **Success signal** | `linear_trace` on a clean chain (including irreversible steps) → no RUNTIME errors; hand-crafted out-of-order / unknown / incomplete / missing-checkpoint traces produce expected `RUNTIME_*` findings (`RUNTIME_MISSING_CHECKPOINT` ERROR when an irreversible step `STARTED` or `COMPLETED` without a prior `CHECKPOINT` for that `step_id`). Structural tests + surface freeze lock stay green without core importing the adapter. |
 | **Rollback** | Delete `adapters/runtime_verify.py` (+ optional `runtime_codes.py`) + runtime adapter tests + this decision + milestone row. Core contracts unchanged. |
+
+**Checkpoint semantics (D2 deepen):** `StepEventType.CHECKPOINT` is per irreversible `step_id`, required before that step’s `STARTED` (also enforced on `COMPLETED` if no prior checkpoint). Missing → `RUNTIME_MISSING_CHECKPOINT` ERROR. Structural `IRREVERSIBLE_NO_OUTCOME` unchanged.
 
 **Preconditions:** G1–G5 hold (milestones through v0.1 surface freeze / evidence corpus; contracts stable; single-purpose thin boundary).
 

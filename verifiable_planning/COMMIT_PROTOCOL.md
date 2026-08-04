@@ -3,7 +3,7 @@
 Cadence and rules for when (and when not) to commit.  
 Companion to [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md).
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 ---
 
@@ -44,7 +44,7 @@ Before every commit:
 
 1. **Essential rubric rows** still hold for the touched area.
 2. `python3 examples.py` runs from `verifiable_planning/` (good plan VALID; deliberate failures still produce expected findings).
-3. `python3 examples_runtime.py` runs from `verifiable_planning/` (structural VALID → happy runtime VALID; deliberate runtime failure shows `RUNTIME_DEPENDENCY_ORDER`).
+3. `python3 examples_runtime.py` runs from `verifiable_planning/` (structural VALID → happy runtime VALID; deliberate `RUNTIME_DEPENDENCY_ORDER`; irreversible happy path + deliberate `RUNTIME_MISSING_CHECKPOINT`).
 4. `python3 examples_llm.py` runs from `verifiable_planning/` (happy path VALID; deliberate failure shows `UNKNOWN_DEPENDENCY`).
 5. If a validator changed: at least one positive and one negative case exist (examples and/or tests).
 6. Diff is one logical increment — split unrelated changes.
@@ -87,6 +87,7 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | 14 | Runtime verify adapter (D2) | Thin `verify_trace` + `linear_trace`; `RUNTIME_*` codes; structural freeze intact | done 2026-08-02 |
 | 15 | Runtime e2e demo | `examples_runtime.py` + docs: Plan → Validate → Runtime happy path + deliberate failure; no new Decision/codes | done 2026-08-02 |
 | 16 | LLM e2e demo | `examples_llm.py` + docs: goal → plan_from_goal → validate happy path + deliberate UNKNOWN_DEPENDENCY; no new Decision/codes | done 2026-08-03 |
+| 17 | D2 irreversible checkpoint | `CHECKPOINT` event + `RUNTIME_MISSING_CHECKPOINT`; `linear_trace` emit; demo + tests; D2 success signal amended; structural freeze intact | done 2026-08-04 |
 
 Update the **Status** column when a milestone lands (`done` + date).
 

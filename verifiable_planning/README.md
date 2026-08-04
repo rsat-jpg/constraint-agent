@@ -158,7 +158,7 @@ Optional extra (no pinned SDK): `pip install -e ".[llm]"`.
 
 ## Optional: runtime trace verification (Decision D2)
 
-Approved in [`EXPANSION_GATE.md`](EXPANSION_GATE.md). Compares an inspectable step-event stream to plan `depends_on` order. Structural `validate_plan` stays the offline gate; runtime codes use the `RUNTIME_*` namespace.
+Approved in [`EXPANSION_GATE.md`](EXPANSION_GATE.md). Compares an inspectable step-event stream to plan `depends_on` order and irreversible checkpoints. Structural `validate_plan` stays the offline gate; runtime codes use the `RUNTIME_*` namespace.
 
 ```python
 from verifiable_planning import validate_plan
@@ -173,8 +173,9 @@ result = verify_trace(plan, events)
 print(result.is_valid, [f.code for f in result.findings])
 ```
 
-Checks (v1): `RUNTIME_UNKNOWN_STEP`, `RUNTIME_DEPENDENCY_ORDER`, `RUNTIME_INCOMPLETE`.  
-Runnable demo: `python3 examples_runtime.py` (happy path + deliberate `RUNTIME_DEPENDENCY_ORDER` failure).  
+Checks: `RUNTIME_UNKNOWN_STEP`, `RUNTIME_DEPENDENCY_ORDER`, `RUNTIME_INCOMPLETE`, `RUNTIME_MISSING_CHECKPOINT` (irreversible step without prior `CHECKPOINT` event).  
+`linear_trace` emits `CHECKPOINT` immediately before `STARTED` for `is_irreversible` steps.  
+Runnable demo: `python3 examples_runtime.py` (happy path + deliberate `RUNTIME_DEPENDENCY_ORDER` + irreversible checkpoint happy/missing failure).  
 Optional extra: `pip install -e ".[runtime]"`.
 
 ## Knowledge contract
@@ -210,9 +211,9 @@ _Only after an approved decision in `EXPANSION_GATE.md`:_
 
 - Optional PDDL export / import
 
-_Or deepen Decision D2 (still adapter-side):_
+_Or deepen Decision D2 further (still adapter-side):_
 
-- Irreversible/checkpoint runtime checks; richer event producers
+- Richer event producers beyond `linear_trace`; additional execute-time checks
 
 _Or after an explicit structural unfreeze / version bump:_
 

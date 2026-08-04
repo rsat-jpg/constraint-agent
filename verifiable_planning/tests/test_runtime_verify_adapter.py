@@ -14,6 +14,7 @@ from verifiable_planning.adapters.runtime_verify import (
     RUNTIME_CODES,
     RUNTIME_DEPENDENCY_ORDER,
     RUNTIME_INCOMPLETE,
+    RUNTIME_MISSING_CHECKPOINT,
     RUNTIME_UNKNOWN_STEP,
     StepEvent,
     StepEventType,
@@ -117,6 +118,69 @@ def test_linear_trace_rejects_cyclic_plan():
     )
     with pytest.raises(ValueError, match="acyclic"):
         linear_trace(plan)
+
+
+def _irreversible_plan() -> Plan:
+    return Plan(
+        id="runtime-irreversible",
+        goal="Publish after review checkpoint",
+        steps=[
+            Step(id="draft", description="Write draft", depends_on=[]),
+            Step(
+                id="publish",
+                description="Publish artifact",
+                depends_on=["draft"],
+                expected_outcome="Artifact published",
+                is_irreversible=True,
+            ),
+        ],
+    )
+
+
+def test_linear_trace_emits_checkpoint_before_irreversible_start():
+    plan = _irreversible_plan()
+    assert validate_plan(plan).is_valid
+    events = linear_trace(plan)
+    assert events == [
+        StepEvent(step_id="draft", type=StepEventType.STARTED),
+        StepEvent(step_id="draft", type=StepEventType.COMPLETED),
+        StepEvent(step_id="publish", type=StepEventType.CHECKPOINT),
+        StepEvent(step_id="publish", type=StepEventType.STARTED),
+        StepEvent(step_id="publish", type=StepEventType.COMPLETED),
+    ]
+    result = verify_trace(plan, events)
+    assert result.is_valid is True
+    assert RUNTIME_MISSING_CHECKPOINT not in {f.code for f in result.findings}
+
+
+def test_missing_checkpoint_on_irreversible_started():
+    plan = _irreversible_plan()
+    events = [
+        StepEvent(step_id="draft", type=StepEventType.STARTED),
+        StepEvent(step_id="draft", type=StepEventType.COMPLETED),
+        StepEvent(step_id="publish", type=StepEventType.STARTED),
+        StepEvent(step_id="publish", type=StepEventType.COMPLETED),
+    ]
+    result = verify_trace(plan, events)
+    assert result.is_valid is False
+    codes = [f.code for f in result.findings]
+    assert codes.count(RUNTIME_MISSING_CHECKPOINT) == 2  # STARTED + COMPLETED
+    finding = next(f for f in result.findings if f.code == RUNTIME_MISSING_CHECKPOINT)
+    assert finding.severity == Severity.ERROR
+    assert finding.step_ids == ["publish"]
+    assert finding.suggested_repair
+
+
+def test_missing_checkpoint_on_completed_without_prior_checkpoint():
+    plan = _irreversible_plan()
+    events = [
+        StepEvent(step_id="draft", type=StepEventType.STARTED),
+        StepEvent(step_id="draft", type=StepEventType.COMPLETED),
+        StepEvent(step_id="publish", type=StepEventType.COMPLETED),
+    ]
+    result = verify_trace(plan, events)
+    assert result.is_valid is False
+    assert RUNTIME_MISSING_CHECKPOINT in {f.code for f in result.findings}
 
 
 def test_core_public_api_does_not_export_runtime_adapter():

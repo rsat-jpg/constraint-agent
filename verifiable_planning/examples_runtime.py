@@ -55,6 +55,21 @@ def main() -> None:
         ],
     )
 
+    irreversible_plan = Plan(
+        id="runtime-demo-irreversible",
+        goal="Publish after review checkpoint",
+        steps=[
+            Step(id="draft", description="Write draft", depends_on=[]),
+            Step(
+                id="publish",
+                description="Publish artifact",
+                depends_on=["draft"],
+                expected_outcome="Artifact published",
+                is_irreversible=True,
+            ),
+        ],
+    )
+
     # ------------------------------------------------------------------
     # A. Happy path: validate → linear_trace → verify_trace
     # ------------------------------------------------------------------
@@ -89,6 +104,43 @@ def main() -> None:
     print_events(bad_events)
     runtime_bad = verify_trace(plan, bad_events)
     print_result(runtime_bad)
+
+    # ------------------------------------------------------------------
+    # C. Irreversible happy path: linear_trace emits CHECKPOINT
+    # ------------------------------------------------------------------
+    print("\n" + "#" * 60)
+    print("# Structural validate (irreversible plan)")
+    print("#" * 60)
+    struct_irr = validate_plan(irreversible_plan)
+    print_result(struct_irr)
+    if not struct_irr.is_valid:
+        raise SystemExit(
+            "Irreversible plan is structurally INVALID; fix before linear_trace."
+        )
+
+    print("\n" + "#" * 60)
+    print("# Runtime verify — irreversible happy path (linear_trace)")
+    print("#" * 60)
+    irr_events = linear_trace(irreversible_plan)
+    print_events(irr_events)
+    runtime_irr_ok = verify_trace(irreversible_plan, irr_events)
+    print_result(runtime_irr_ok)
+
+    # ------------------------------------------------------------------
+    # D. Deliberate failure: irreversible start without CHECKPOINT
+    # ------------------------------------------------------------------
+    print("\n" + "#" * 60)
+    print("# Runtime verify — deliberate failure (missing checkpoint)")
+    print("#" * 60)
+    missing_checkpoint = [
+        StepEvent(step_id="draft", type=StepEventType.STARTED),
+        StepEvent(step_id="draft", type=StepEventType.COMPLETED),
+        StepEvent(step_id="publish", type=StepEventType.STARTED),
+        StepEvent(step_id="publish", type=StepEventType.COMPLETED),
+    ]
+    print_events(missing_checkpoint)
+    runtime_miss = verify_trace(irreversible_plan, missing_checkpoint)
+    print_result(runtime_miss)
 
 
 if __name__ == "__main__":
