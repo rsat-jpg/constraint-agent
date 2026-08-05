@@ -31,7 +31,7 @@ Each commit should be justifiable against the knowledge rubric and leave the tre
 ## Do not commit
 
 - Half-finished validators with no pos+neg evidence
-- Experiments that break `python3 examples.py`, `python3 examples_runtime.py`, or `python3 examples_llm.py`
+- Experiments that break `python3 examples.py`, `python3 examples_runtime.py`, `python3 examples_llm.py`, or `python3 examples_pddl.py`
 - Scope leaks (LLM, PDDL, multi-agent, UI) without an explicit expansion decision recorded in the rubric or a short decision note
 - Secrets, credentials, local env files
 - Generated noise (`__pycache__/`, `.venv/`, `.pytest_cache/`)
@@ -46,9 +46,10 @@ Before every commit:
 2. `python3 examples.py` runs from `verifiable_planning/` (good plan VALID; deliberate failures still produce expected findings).
 3. `python3 examples_runtime.py` runs from `verifiable_planning/` (structural VALID → happy runtime VALID; deliberate `RUNTIME_DEPENDENCY_ORDER`; irreversible happy path + deliberate `RUNTIME_MISSING_CHECKPOINT`).
 4. `python3 examples_llm.py` runs from `verifiable_planning/` (happy path VALID; deliberate failure shows `UNKNOWN_DEPENDENCY`).
-5. If a validator changed: at least one positive and one negative case exist (examples and/or tests).
-6. Diff is one logical increment — split unrelated changes.
-7. Message explains **why**, not a file list.
+5. `python3 examples_pddl.py` runs from `verifiable_planning/` (clean export; label-gap plan stays structurally VALID; `p_data_licensed` visible in export without being an effect).
+6. If a validator changed: at least one positive and one negative case exist (examples and/or tests).
+7. Diff is one logical increment — split unrelated changes.
+8. Message explains **why**, not a file list.
 
 ---
 
@@ -88,6 +89,7 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | 15 | Runtime e2e demo | `examples_runtime.py` + docs: Plan → Validate → Runtime happy path + deliberate failure; no new Decision/codes | done 2026-08-02 |
 | 16 | LLM e2e demo | `examples_llm.py` + docs: goal → plan_from_goal → validate happy path + deliberate UNKNOWN_DEPENDENCY; no new Decision/codes | done 2026-08-03 |
 | 17 | D2 irreversible checkpoint | `CHECKPOINT` event + `RUNTIME_MISSING_CHECKPOINT`; `linear_trace` emit; demo + tests; D2 success signal amended; structural freeze intact | done 2026-08-04 |
+| 18 | PDDL export adapter (D3) | Thin `plan_to_pddl` export-only; lossy edges documented; structurally VALID label-gap plan visible in export; no planner; structural freeze intact | done 2026-08-04 |
 
 Update the **Status** column when a milestone lands (`done` + date).
 

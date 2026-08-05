@@ -140,6 +140,24 @@ Amended 2026-08-04: irreversible/checkpoint check (still Candidate C / D2 — no
 
 **Preconditions:** G1–G5 hold (milestones through v0.1 surface freeze / evidence corpus; contracts stable; single-purpose thin boundary).
 
+#### D3 — Thin PDDL export bridge (Candidate B) — 2026-08-04
+
+**Status:** CP1 approved (export-only); adapter + demo/tests landed (milestone 18).
+
+| Field | Answer |
+|-------|--------|
+| **Candidate / failure mode** | **B.** Structurally `VALID` plans can still be *semantically unreachable* w.r.t. free-form precondition labels: `Step.preconditions` may list non-step condition strings that no prior step establishes. Structural `PRECONDITION_NOT_IN_DEPENDS_ON` only fires when a precondition matches a known step id and is omitted from `depends_on`; validators **ignore** free-form labels in v0.1 (see `_check_precondition_depends_on`). |
+| **Why structural Validate is insufficient** | Validate is offline over graph/shape only. It does not model predicate achievement, effect closure, or true reachability. Under the `0.1.x` structural freeze, adding a new structural code for label-reachability would expand the frozen surface; Candidate B is the approved path for formal/semantic representation. |
+| **Adapter boundary** | Core (`models`, `validators`, frozen `finding_codes`, package `__init__`) never imports the PDDL adapter or any planner SDK/binary. Adapter depends inward on `Plan` / `Step` only. **D3 implementation scope: export-only** — `Plan` → PDDL text (domain/problem or equivalent) with **documented lossy edges**. No required PDDL toolchain for default install, `examples.py`, or structural tests. Import sync and planner-backed `FORMAL_*` / `PDDL_*` findings are **out of scope for this Decision’s first success signal** (would need an explicit D3 deepen or new Decision). |
+| **Success signal** | (1) Structurally clean chain exports to inspectable PDDL where step actions and label preconditions/effects are explicit. (2) A deliberately label-unreachable plan remains structurally `VALID` under `validate_plan`, yet the export makes the unestablished precondition predicate visible (test asserts export contents / mapping invariants — **no external planner required**). (3) Core tests + surface freeze lock stay green without core importing the adapter. |
+| **Rollback** | Delete `adapters/pddl_bridge.py` (+ optional codes module if any) + PDDL adapter tests + `examples_pddl.py` + this decision + milestone row + README/CHANGELOG mentions. Core contracts unchanged. |
+
+**Lossy-edge expectations (to document with the adapter):** free-text `description` / `goal` / `expected_outcome` are not full PDDL semantics; mapping will use explicit conventions (e.g. sanitize ids → predicates/actions; treat non-step precondition labels as required predicates; treat `expected_outcome` as a best-effort effect label or documented non-effect). Exact conventions land with the implementation, not by changing core models.
+
+**Counterexample sketch (for CP1):** Plan with steps `a` → `b` where `b.preconditions == ["data_licensed"]` (not a step id), `b.depends_on == ["a"]`, and no step establishes `data_licensed`. `validate_plan` → `VALID` (no `PRECONDITION_NOT_IN_DEPENDS_ON`). Export should show `b` requiring predicate `data_licensed` while init/effects lack it.
+
+**Preconditions:** G1–G5 hold (milestones 0–17 done; demos + tests green 2026-08-04; contracts stable; single-purpose thin export boundary).
+
 ---
 
 ## How to use

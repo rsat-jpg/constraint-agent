@@ -55,11 +55,11 @@ Last updated: 2026-08-04
 
 ## 7. Living Knowledge Gaps
 
-- ~~Exact boundary of what pure structural validation can reliably catch~~ → **partial for v0.1:** [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md) + surface freeze document fires/overlaps; thin LLM→Plan (Decision D1) and runtime trace checks (Decision D2, `RUNTIME_*` including irreversible `CHECKPOINT` / `RUNTIME_MISSING_CHECKPOINT`) have stranger-runnable demos (`examples_llm.py`, `examples_runtime.py`) but are not a full executor
+- ~~Exact boundary of what pure structural validation can reliably catch~~ → **partial for v0.1:** [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md) + surface freeze document fires/overlaps; thin LLM→Plan (Decision D1) and runtime trace checks (Decision D2, `RUNTIME_*` including irreversible `CHECKPOINT` / `RUNTIME_MISSING_CHECKPOINT`) have stranger-runnable demos (`examples_llm.py`, `examples_runtime.py`) but are not a full executor; free-form precondition labels remain outside structural Validate (see validators) and are made inspectable via PDDL export (Decision D3, `examples_pddl.py`)
 - ~~Minimal powerful set of validation rules~~ → **closed for v0.1 product line:** 13 finding codes frozen for `0.1.x` (product judgment + corpus evidence, not a claim of global optimality)
 - Clean schema for "finding + suggested repair" (v0.1 shape exists and is stable for `0.1.x`; may still refine on a later version line)
 - ~~Packaging and documentation practices that make an open-source release actually usable~~ → MIT LICENSE, package exports, README quickstart (v0.1)
-- ~~When structural verification should hand off to semantic or formal methods~~ → see [`EXPANSION_GATE.md`](EXPANSION_GATE.md)
+- ~~When structural verification should hand off to semantic or formal methods~~ → **partial:** Decision D3 export-only PDDL bridge in [`EXPANSION_GATE.md`](EXPANSION_GATE.md); import sync / planner-backed findings still require an explicit deepen or new Decision
 
 ---
 

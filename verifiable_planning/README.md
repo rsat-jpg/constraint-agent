@@ -48,6 +48,7 @@ Or run the bundled demos and tests:
 python3 examples.py
 python3 examples_runtime.py
 python3 examples_llm.py
+python3 examples_pddl.py
 python3 -m pytest -q
 ```
 
@@ -72,6 +73,8 @@ Structural validators only:
 | PRECONDITION_NOT_IN_DEPENDS_ON| warning  | Precondition names a step id omitted from depends_on             |
 | MISSING_TERMINAL_OUTCOME      | warning  | No terminal step declares expected_outcome (goal-coverage proxy) |
 | MULTIPLE_TERMINALS            | warning  | Multi-step DAG has more than one sink (fork without join)        |
+
+Free-form (non-step-id) strings in `Step.preconditions` are **ignored** by structural Validate; Decision D3 PDDL export makes them inspectable.
 
 ### Finding overlap (graph warnings)
 
@@ -114,6 +117,7 @@ verifiable_planning/                 # this project root
 ├── examples.py                      # Positive + deliberate failure cases (Validate)
 ├── examples_runtime.py              # Plan → Validate → Runtime demo (Decision D2)
 ├── examples_llm.py                  # Goal → Plan → Validate demo (Decision D1)
+├── examples_pddl.py                 # Plan → Validate → PDDL export demo (Decision D3)
 ├── verifiable_planning/             # Installable package
 │   ├── __init__.py                  # Public exports (Validate core only)
 │   ├── models.py                    # Plan, Step, findings, result
@@ -121,7 +125,8 @@ verifiable_planning/                 # this project root
 │   ├── validators.py                # Structural validators + graph
 │   └── adapters/
 │       ├── llm_planner.py           # Optional LLM→Plan (Decision D1)
-│       └── runtime_verify.py        # Optional trace verify (Decision D2)
+│       ├── runtime_verify.py        # Optional trace verify (Decision D2)
+│       └── pddl_bridge.py           # Optional Plan→PDDL export (Decision D3)
 └── tests/
     ├── corpus_loader.py
     ├── fixtures/llm_shaped/         # Evidence corpus JSON plans
@@ -129,7 +134,8 @@ verifiable_planning/                 # this project root
     ├── test_llm_planner_adapter.py
     ├── test_evidence_corpus.py
     ├── test_surface_freeze.py       # 0.1.x structural finding-code set lock
-    └── test_runtime_verify_adapter.py
+    ├── test_runtime_verify_adapter.py
+    └── test_pddl_bridge_adapter.py
 ```
 
 ## Evidence corpus
@@ -178,6 +184,23 @@ Checks: `RUNTIME_UNKNOWN_STEP`, `RUNTIME_DEPENDENCY_ORDER`, `RUNTIME_INCOMPLETE`
 Runnable demo: `python3 examples_runtime.py` (happy path + deliberate `RUNTIME_DEPENDENCY_ORDER` + irreversible checkpoint happy/missing failure).  
 Optional extra: `pip install -e ".[runtime]"`.
 
+## Optional: PDDL export (Decision D3)
+
+Approved in [`EXPANSION_GATE.md`](EXPANSION_GATE.md). **Export-only** map from a `Plan` to inspectable PDDL domain+problem text so free-form precondition labels (ignored by structural Validate) become visible. No planner binary; core stays PDDL-free.
+
+```python
+from verifiable_planning import validate_plan
+from verifiable_planning.adapters.pddl_bridge import plan_to_pddl, LOSSY_EDGES
+
+plan = ...  # may be structurally sound yet label-unreachable
+assert validate_plan(plan).is_valid
+print(plan_to_pddl(plan))   # see LOSSY_EDGES for what is / is not compiled
+```
+
+Conventions (lossy): `depends_on` → `(done_*)` preconditions; non-step-id `preconditions` → `(p_*)`; `expected_outcome` / goal prose are comments only (not effects). `:init` is empty.  
+Runnable demo: `python3 examples_pddl.py` (clean export + deliberate `data_licensed` label gap that stays structurally VALID).  
+Optional extra: `pip install -e ".[pddl]"`.
+
 ## Knowledge contract
 
 All design decisions are governed by [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md).  
@@ -197,7 +220,8 @@ Criteria for LLM / PDDL / runtime / multi-agent / UI work: [`EXPANSION_GATE.md`]
 - Structural **Validate** core stays LLM-free (no model calls inside validators)
 - Optional LLM→Plan adapter exists behind Decision D1; core `__init__` does not import it
 - Optional runtime trace verify exists behind Decision D2; core `__init__` does not import it
-- No PDDL / classical planner integration
+- Optional PDDL **export** exists behind Decision D3; no planner required; core `__init__` does not import it
+- No PDDL import sync / classical planner integration (out of D3 first success signal)
 - No multi-agent orchestration
 - No UI
 
@@ -207,9 +231,9 @@ Further expansion still requires a Decision in [`EXPANSION_GATE.md`](EXPANSION_G
 
 The v0.1 structural Validate surface is **frozen** (see above). Default next work is **not** another structural finding code.
 
-_Only after an approved decision in `EXPANSION_GATE.md`:_
+_Deepen Decision D3 (still adapter-side; new Decision or explicit deepen note):_
 
-- Optional PDDL export / import
+- PDDL import sync; optional planner-backed formal findings (`FORMAL_*` / `PDDL_*`)
 
 _Or deepen Decision D2 further (still adapter-side):_
 

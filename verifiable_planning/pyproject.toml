@@ -19,6 +19,8 @@ dev = [
 llm = []
 # Runtime verify uses injected/fixture event lists only — no executor pin.
 runtime = []
+# PDDL export is pure Python string mapping — no planner pin.
+pddl = []
 
 [build-system]
 requires = ["setuptools>=68"]
