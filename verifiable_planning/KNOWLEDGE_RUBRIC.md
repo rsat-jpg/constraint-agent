@@ -55,11 +55,11 @@ Last updated: 2026-08-05
 
 ## 7. Living Knowledge Gaps
 
-- ~~Exact boundary of what pure structural validation can reliably catch~~ → **partial for v0.1:** [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md) + surface freeze document fires/overlaps; thin LLM→Plan (Decision D1) and runtime trace checks (Decision D2, `RUNTIME_*` including irreversible `CHECKPOINT` / `RUNTIME_MISSING_CHECKPOINT`) have stranger-runnable demos (`examples_llm.py`, `examples_runtime.py`) but are not a full executor; free-form precondition labels remain outside structural Validate (see validators) and are made inspectable via PDDL export plus convention-`FORMAL_*` findings (Decision D3 deepen, `check_unestablished_preconditions` / `examples_pddl.py`) — still not planner-backed
+- ~~Exact boundary of what pure structural validation can reliably catch~~ → **partial for v0.1:** [`EVIDENCE_CORPUS.md`](EVIDENCE_CORPUS.md) + surface freeze document fires/overlaps; thin LLM→Plan (Decision D1) and runtime trace checks (Decision D2, `RUNTIME_*` including irreversible `CHECKPOINT` / `RUNTIME_MISSING_CHECKPOINT`) have stranger-runnable demos (`examples_llm.py`, `examples_runtime.py`) but are not a full executor; free-form precondition labels remain outside structural Validate (see validators) and are made inspectable via PDDL export plus convention-`FORMAL_*` findings (Decision D3 deepen, `check_unestablished_preconditions` / `examples_pddl.py`); optional planner-gated `PLANNER_*` over the lossy export exists behind Decision D4 (`check_plan_with_planner` / `examples_planner.py`) — still not sound full PDDL semantics and not a required binary
 - ~~Minimal powerful set of validation rules~~ → **closed for v0.1 product line:** 13 finding codes frozen for `0.1.x` (product judgment + corpus evidence, not a claim of global optimality)
 - Clean schema for "finding + suggested repair" (v0.1 shape exists and is stable for `0.1.x`; may still refine on a later version line)
 - ~~Packaging and documentation practices that make an open-source release actually usable~~ → MIT LICENSE, package exports, README quickstart (v0.1)
-- ~~When structural verification should hand off to semantic or formal methods~~ → **partial+:** Decision D3 export + convention-`FORMAL_UNESTABLISHED_PRECONDITION` in [`EXPANSION_GATE.md`](EXPANSION_GATE.md); establishment conventions, import sync, and planner-backed findings still require separate Decisions/deepens
+- ~~When structural verification should hand off to semantic or formal methods~~ → **partial+:** Decision D3 export + convention-`FORMAL_*` + Decision D4 planner-gated `PLANNER_*` in [`EXPANSION_GATE.md`](EXPANSION_GATE.md); establishment conventions and import sync still require separate Decisions/deepens
 
 ---
 

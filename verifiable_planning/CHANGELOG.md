@@ -11,5 +11,7 @@
 - Thin optional PDDL export (Expansion Gate Decision D3, 2026-08-04): `plan_to_pddl`; lossy edges documented; no planner; structural freeze intact
 - D3 deepen (2026-08-05): convention-`FORMAL_*` via `check_unestablished_preconditions` (`FORMAL_UNESTABLISHED_PRECONDITION`); not planner reachability; no planner required
 - Runnable Plan → Validate → formal → PDDL demo: `examples_pddl.py` (clean path + deliberate free-form `data_licensed` label gap)
+- Thin optional planner-gated checks (Expansion Gate Decision D4, 2026-08-06): `check_plan_with_planner` + `PLANNER_*`; injected runner; distinct from convention-`FORMAL_*`; no required binary
+- Runnable Plan → Validate → planner demo: `examples_planner.py` (injected fake planner; clean solvable + label-gap `PLANNER_GOAL_UNREACHABLE` + unavailable path)
 - Evidence corpus of LLM-shaped fixtures with expected codes and overlaps
-- **Structural Validate surface freeze:** 13 finding codes locked for package `0.1.x` (see README); runtime codes are a separate namespace
+- **Structural Validate surface freeze:** 13 finding codes locked for package `0.1.x` (see README); runtime / formal / planner codes are separate namespaces

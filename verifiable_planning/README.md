@@ -49,6 +49,7 @@ python3 examples.py
 python3 examples_runtime.py
 python3 examples_llm.py
 python3 examples_pddl.py
+python3 examples_planner.py
 python3 -m pytest -q
 ```
 
@@ -118,6 +119,7 @@ verifiable_planning/                 # this project root
 ├── examples_runtime.py              # Plan → Validate → Runtime demo (Decision D2)
 ├── examples_llm.py                  # Goal → Plan → Validate demo (Decision D1)
 ├── examples_pddl.py                 # Plan → Validate → formal → PDDL demo (Decision D3)
+├── examples_planner.py              # Plan → Validate → planner-gated demo (Decision D4)
 ├── verifiable_planning/             # Installable package
 │   ├── __init__.py                  # Public exports (Validate core only)
 │   ├── models.py                    # Plan, Step, findings, result
@@ -126,7 +128,8 @@ verifiable_planning/                 # this project root
 │   └── adapters/
 │       ├── llm_planner.py           # Optional LLM→Plan (Decision D1)
 │       ├── runtime_verify.py        # Optional trace verify (Decision D2)
-│       └── pddl_bridge.py           # Optional Plan→PDDL export + convention-FORMAL_* (Decision D3)
+│       ├── pddl_bridge.py           # Optional Plan→PDDL export + convention-FORMAL_* (Decision D3)
+│       └── planner_bridge.py        # Optional planner-gated PLANNER_* (Decision D4)
 └── tests/
     ├── corpus_loader.py
     ├── fixtures/llm_shaped/         # Evidence corpus JSON plans
@@ -135,7 +138,8 @@ verifiable_planning/                 # this project root
     ├── test_evidence_corpus.py
     ├── test_surface_freeze.py       # 0.1.x structural finding-code set lock
     ├── test_runtime_verify_adapter.py
-    └── test_pddl_bridge_adapter.py
+    ├── test_pddl_bridge_adapter.py
+    └── test_planner_bridge_adapter.py
 ```
 
 ## Evidence corpus
@@ -209,6 +213,34 @@ Check: `FORMAL_UNESTABLISHED_PRECONDITION` (ERROR) for each free-form preconditi
 Runnable demo: `python3 examples_pddl.py` (clean export + formal clean; deliberate `data_licensed` gap stays structurally VALID and fires formal ERROR).  
 Optional extra: `pip install -e ".[pddl]"`.
 
+## Optional: planner-gated checks (Decision D4)
+
+Approved in [`EXPANSION_GATE.md`](EXPANSION_GATE.md). Runs an **injected** `run_planner(pddl) -> PlannerOutcome` over D3-exported PDDL and emits **`PLANNER_*`** findings. Distinct from convention-`FORMAL_*`. Not sound full PDDL semantics (lossy export). No required planner binary; core stays planner-free.
+
+```python
+from verifiable_planning import validate_plan
+from verifiable_planning.adapters.pddl_bridge import plan_to_pddl
+from verifiable_planning.adapters.planner_bridge import (
+    check_plan_with_planner,
+    PlannerOutcome,
+    PlannerStatus,
+)
+
+def run_planner(pddl: str) -> PlannerOutcome:
+    # Wrap your classical planner here; demos/tests inject a fake.
+    ...
+
+plan = ...
+assert validate_plan(plan).is_valid
+result = check_plan_with_planner(plan, run_planner)  # PLANNER_* if unsat / unavailable
+_ = plan_to_pddl(plan)  # same export the runner receives
+```
+
+Codes: `PLANNER_GOAL_UNREACHABLE` (ERROR) when the runner reports unsat; `PLANNER_UNAVAILABLE` / `PLANNER_ERROR` (ERROR) when the runner is missing or fails — never silent success.  
+v1 may overlap convention-`FORMAL_*` on the same label-gap fixture; namespaces stay distinct.  
+Runnable demo: `python3 examples_planner.py` (injected fake planner only).  
+Optional extra: `pip install -e ".[planner]"`.
+
 ## Knowledge contract
 
 All design decisions are governed by [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md).  
@@ -229,7 +261,8 @@ Criteria for LLM / PDDL / runtime / multi-agent / UI work: [`EXPANSION_GATE.md`]
 - Optional LLM→Plan adapter exists behind Decision D1; core `__init__` does not import it
 - Optional runtime trace verify exists behind Decision D2; core `__init__` does not import it
 - Optional PDDL **export** + convention-`FORMAL_*` check exist behind Decision D3; no planner required; core `__init__` does not import them
-- No PDDL import sync / classical planner integration / planner-backed findings (separate later Decisions; not this deepen)
+- Optional planner-gated `PLANNER_*` check exists behind Decision D4; injected runner only; no required binary; core `__init__` does not import it
+- No PDDL import sync / establishment convention for free-form labels (separate later Decisions)
 - No multi-agent orchestration
 - No UI
 
@@ -242,8 +275,8 @@ The v0.1 structural Validate surface is **frozen** (see above). Default next wor
 _Still adapter-side; each needs its own Decision or deepen — do not lump:_
 
 - **Convention-`FORMAL_*` extensions** (D3): e.g. an explicit establishment convention so some free-form labels can be green without a planner; sanitize-collision findings
-- **Planner-backed checks** (D3 / Candidate B): external planner / planner-gated findings — optional, never required for demos/tests; distinct from convention-`FORMAL_*`
 - **PDDL import sync** (D3 / Candidate B): separate job from findings
+- Optional real classical planner binary wrapper behind the D4 injected `run_planner` seam (still never required for default demos/tests)
 
 _Or deepen Decision D2 further (still adapter-side):_
 

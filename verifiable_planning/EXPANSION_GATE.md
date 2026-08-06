@@ -3,7 +3,7 @@
 Written criteria for adding capabilities after the v0.1 Validate core.  
 Companion to [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md) and [`COMMIT_PROTOCOL.md`](COMMIT_PROTOCOL.md).
 
-Last updated: 2026-08-05
+Last updated: 2026-08-06
 
 ---
 
@@ -177,11 +177,34 @@ Amended 2026-08-04: irreversible/checkpoint check (still Candidate C / D2 — no
 **Out of scope for this deepen (separate later Decisions/deepens — do not lump):**
 
 1. **Convention-`FORMAL_*` extensions** — e.g. an explicit establishment convention so some free-form labels can be green without a planner; sanitize-collision findings.
-2. **Planner-backed checks** — external planner / planner-gated findings (distinct namespace or explicit planner gate); **not** required for demos/tests; distinct from convention-`FORMAL_*`.
+2. **Planner-backed checks** — external planner / planner-gated findings (distinct namespace or explicit planner gate); **not** required for demos/tests; distinct from convention-`FORMAL_*`. **Landed as Decision D4** (`PLANNER_*`).
 3. **PDDL import sync** — separate job from findings.
 4. Structural unfreeze / new structural codes; D2/executor work; Candidate D.
 
 **Preconditions:** G1–G5 hold (milestones 0–18 done; demos + tests green 2026-08-05; contracts stable; single-purpose thin deepen).
+
+#### D4 — Planner-gated formal checks (Candidate B) — 2026-08-06
+
+**Status:** CP1 approved; adapter + demo/tests landed (milestone 20).
+
+| Field | Answer |
+|-------|--------|
+| **Candidate / failure mode** | **B.** Structurally `VALID` plans (and plans already flagged only by convention-`FORMAL_*`) can still be *unreachable* under the D3-exported PDDL theory when a classical planner finds no solution (e.g. free-form `p_*` preconditions never established). Callers need a **planner-gated** finding path distinct from static convention-`FORMAL_*`. |
+| **Why structural Validate is insufficient** | Same as D3: graph/shape only; free-form labels ignored. Convention-`FORMAL_*` is static over `LOSSY_EDGES` and is **not** classical reachability. True planner-backed unsat requires an external/injected planner over the export. |
+| **Adapter boundary** | Core (`models`, `validators`, frozen `finding_codes`, package `__init__`) never imports the planner adapter or any planner SDK/binary. Adapter depends inward on `Plan` + `ValidationFinding` / `ValidationResult` and reuses D3 `plan_to_pddl`. Planner is an **injected** `run_planner(pddl: str) -> PlannerOutcome` callable (D1-style). Codes use the **`PLANNER_*`** namespace only — **not** convention-`FORMAL_*` and **not** the frozen structural set. No required planner for default install, `examples.py`, structural tests, or `examples_pddl.py`. |
+| **Success signal** | (1) Clean chain + solvable injected runner → no `PLANNER_GOAL_UNREACHABLE`. (2) Label-gap plan (`b.preconditions == ["data_licensed"]`) remains structurally `VALID`; with unsat runner → `PLANNER_GOAL_UNREACHABLE` ERROR (planner `is_valid` false). (3) Missing/failing runner → `PLANNER_UNAVAILABLE` / `PLANNER_ERROR` (never silent success). (4) Core tests + surface freeze lock stay green without core importing the adapter. Overlap with convention-`FORMAL_*` on the same fixture is **expected in v1** and documented; namespaces stay distinct. |
+| **Rollback** | Delete `adapters/planner_bridge.py` + planner tests + `examples_planner.py` + this decision + milestone row + README/CHANGELOG/rubric mentions. Leave D3 export + convention-`FORMAL_*` intact. Core contracts unchanged. |
+
+**v1 API:** `check_plan_with_planner(plan, run_planner) -> ValidationResult`. Empty plans: no planner findings (structural `EMPTY_PLAN` owns that case). Analysis is over the **lossy** D3 export — not a claim of sound full PDDL semantics.
+
+**Out of scope for D4 (separate later Decisions/deepens — do not lump):**
+
+1. Convention-`FORMAL_*` extensions (establishment convention, sanitize-collision).
+2. PDDL import sync.
+3. Required planner binary / pin for CI or default demos.
+4. Structural unfreeze / new structural codes; D2/executor work; Candidate D.
+
+**Preconditions:** G1–G5 hold (milestones 0–19 done; demos + tests green 2026-08-06; contracts stable; single-purpose thin planner-gate boundary).
 
 ---
 

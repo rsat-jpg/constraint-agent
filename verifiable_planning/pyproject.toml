@@ -21,6 +21,8 @@ llm = []
 runtime = []
 # PDDL export is pure Python string mapping — no planner pin.
 pddl = []
+# Planner-gated checks use an injected runner only — no binary pin.
+planner = []
 
 [build-system]
 requires = ["setuptools>=68"]

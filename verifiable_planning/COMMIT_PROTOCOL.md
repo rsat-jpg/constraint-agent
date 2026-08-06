@@ -3,7 +3,7 @@
 Cadence and rules for when (and when not) to commit.  
 Companion to [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md).
 
-Last updated: 2026-08-05
+Last updated: 2026-08-06
 
 ---
 
@@ -31,7 +31,7 @@ Each commit should be justifiable against the knowledge rubric and leave the tre
 ## Do not commit
 
 - Half-finished validators with no pos+neg evidence
-- Experiments that break `python3 examples.py`, `python3 examples_runtime.py`, `python3 examples_llm.py`, or `python3 examples_pddl.py`
+- Experiments that break `python3 examples.py`, `python3 examples_runtime.py`, `python3 examples_llm.py`, `python3 examples_pddl.py`, or `python3 examples_planner.py`
 - Scope leaks (LLM, PDDL, multi-agent, UI) without an explicit expansion decision recorded in the rubric or a short decision note
 - Secrets, credentials, local env files
 - Generated noise (`__pycache__/`, `.venv/`, `.pytest_cache/`)
@@ -47,9 +47,10 @@ Before every commit:
 3. `python3 examples_runtime.py` runs from `verifiable_planning/` (structural VALID → happy runtime VALID; deliberate `RUNTIME_DEPENDENCY_ORDER`; irreversible happy path + deliberate `RUNTIME_MISSING_CHECKPOINT`).
 4. `python3 examples_llm.py` runs from `verifiable_planning/` (happy path VALID; deliberate failure shows `UNKNOWN_DEPENDENCY`).
 5. `python3 examples_pddl.py` runs from `verifiable_planning/` (clean export + formal clean; label-gap plan stays structurally VALID; `p_data_licensed` visible in export; formal `FORMAL_UNESTABLISHED_PRECONDITION`).
-6. If a validator changed: at least one positive and one negative case exist (examples and/or tests).
-7. Diff is one logical increment — split unrelated changes.
-8. Message explains **why**, not a file list.
+6. `python3 examples_planner.py` runs from `verifiable_planning/` (injected fake planner; clean solvable; label-gap `PLANNER_GOAL_UNREACHABLE`; unavailable path visible — no real planner binary).
+7. If a validator changed: at least one positive and one negative case exist (examples and/or tests).
+8. Diff is one logical increment — split unrelated changes.
+9. Message explains **why**, not a file list.
 
 ---
 
@@ -91,6 +92,7 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | 17 | D2 irreversible checkpoint | `CHECKPOINT` event + `RUNTIME_MISSING_CHECKPOINT`; `linear_trace` emit; demo + tests; D2 success signal amended; structural freeze intact | done 2026-08-04 |
 | 18 | PDDL export adapter (D3) | Thin `plan_to_pddl` export-only; lossy edges documented; structurally VALID label-gap plan visible in export; no planner; structural freeze intact | done 2026-08-04 |
 | 19 | D3 convention FORMAL_* | `check_unestablished_preconditions` + `FORMAL_UNESTABLISHED_PRECONDITION`; demo + tests; no planner; structural freeze intact | done 2026-08-05 |
+| 20 | D4 planner-gated checks | `check_plan_with_planner` + `PLANNER_*`; injected runner; demo + tests; no required binary; structural freeze intact | done 2026-08-06 |
 
 Update the **Status** column when a milestone lands (`done` + date).
 
