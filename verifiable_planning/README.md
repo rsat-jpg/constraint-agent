@@ -74,7 +74,7 @@ Structural validators only:
 | MISSING_TERMINAL_OUTCOME      | warning  | No terminal step declares expected_outcome (goal-coverage proxy) |
 | MULTIPLE_TERMINALS            | warning  | Multi-step DAG has more than one sink (fork without join)        |
 
-Free-form (non-step-id) strings in `Step.preconditions` are **ignored** by structural Validate; Decision D3 PDDL export makes them inspectable.
+Free-form (non-step-id) strings in `Step.preconditions` are **ignored** by structural Validate; Decision D3 PDDL export makes them inspectable, and convention-`FORMAL_*` (`check_unestablished_preconditions`) emits findings for them under documented mapping conventions.
 
 ### Finding overlap (graph warnings)
 
@@ -117,7 +117,7 @@ verifiable_planning/                 # this project root
 ├── examples.py                      # Positive + deliberate failure cases (Validate)
 ├── examples_runtime.py              # Plan → Validate → Runtime demo (Decision D2)
 ├── examples_llm.py                  # Goal → Plan → Validate demo (Decision D1)
-├── examples_pddl.py                 # Plan → Validate → PDDL export demo (Decision D3)
+├── examples_pddl.py                 # Plan → Validate → formal → PDDL demo (Decision D3)
 ├── verifiable_planning/             # Installable package
 │   ├── __init__.py                  # Public exports (Validate core only)
 │   ├── models.py                    # Plan, Step, findings, result
@@ -126,7 +126,7 @@ verifiable_planning/                 # this project root
 │   └── adapters/
 │       ├── llm_planner.py           # Optional LLM→Plan (Decision D1)
 │       ├── runtime_verify.py        # Optional trace verify (Decision D2)
-│       └── pddl_bridge.py           # Optional Plan→PDDL export (Decision D3)
+│       └── pddl_bridge.py           # Optional Plan→PDDL export + convention-FORMAL_* (Decision D3)
 └── tests/
     ├── corpus_loader.py
     ├── fixtures/llm_shaped/         # Evidence corpus JSON plans
@@ -184,21 +184,29 @@ Checks: `RUNTIME_UNKNOWN_STEP`, `RUNTIME_DEPENDENCY_ORDER`, `RUNTIME_INCOMPLETE`
 Runnable demo: `python3 examples_runtime.py` (happy path + deliberate `RUNTIME_DEPENDENCY_ORDER` + irreversible checkpoint happy/missing failure).  
 Optional extra: `pip install -e ".[runtime]"`.
 
-## Optional: PDDL export (Decision D3)
+## Optional: PDDL export + convention-FORMAL_* (Decision D3)
 
-Approved in [`EXPANSION_GATE.md`](EXPANSION_GATE.md). **Export-only** map from a `Plan` to inspectable PDDL domain+problem text so free-form precondition labels (ignored by structural Validate) become visible. No planner binary; core stays PDDL-free.
+Approved in [`EXPANSION_GATE.md`](EXPANSION_GATE.md). **Export** maps a `Plan` to inspectable PDDL domain+problem text. **Convention-`FORMAL_*`** (`check_unestablished_preconditions`) emits structured findings for free-form precondition labels that are unestablished under documented mapping conventions. This is **not** planner reachability and is **not** sound w.r.t. full PDDL semantics. No planner binary; core stays PDDL-free.
 
 ```python
 from verifiable_planning import validate_plan
-from verifiable_planning.adapters.pddl_bridge import plan_to_pddl, LOSSY_EDGES
+from verifiable_planning.adapters.pddl_bridge import (
+    plan_to_pddl,
+    check_unestablished_preconditions,
+    LOSSY_EDGES,
+)
 
-plan = ...  # may be structurally sound yet label-unreachable
+plan = ...  # may be structurally sound yet have free-form label gaps
 assert validate_plan(plan).is_valid
+formal = check_unestablished_preconditions(plan)  # FORMAL_* if free-form labels
 print(plan_to_pddl(plan))   # see LOSSY_EDGES for what is / is not compiled
 ```
 
+**v1 green path:** under current conventions no step establishes free-form (`p_*`) predicates — the only formal-clean plans are those with **no** free-form precondition labels.
+
 Conventions (lossy): `depends_on` → `(done_*)` preconditions; non-step-id `preconditions` → `(p_*)`; `expected_outcome` / goal prose are comments only (not effects). `:init` is empty.  
-Runnable demo: `python3 examples_pddl.py` (clean export + deliberate `data_licensed` label gap that stays structurally VALID).  
+Check: `FORMAL_UNESTABLISHED_PRECONDITION` (ERROR) for each free-form precondition label.  
+Runnable demo: `python3 examples_pddl.py` (clean export + formal clean; deliberate `data_licensed` gap stays structurally VALID and fires formal ERROR).  
 Optional extra: `pip install -e ".[pddl]"`.
 
 ## Knowledge contract
@@ -220,8 +228,8 @@ Criteria for LLM / PDDL / runtime / multi-agent / UI work: [`EXPANSION_GATE.md`]
 - Structural **Validate** core stays LLM-free (no model calls inside validators)
 - Optional LLM→Plan adapter exists behind Decision D1; core `__init__` does not import it
 - Optional runtime trace verify exists behind Decision D2; core `__init__` does not import it
-- Optional PDDL **export** exists behind Decision D3; no planner required; core `__init__` does not import it
-- No PDDL import sync / classical planner integration (out of D3 first success signal)
+- Optional PDDL **export** + convention-`FORMAL_*` check exist behind Decision D3; no planner required; core `__init__` does not import them
+- No PDDL import sync / classical planner integration / planner-backed findings (separate later Decisions; not this deepen)
 - No multi-agent orchestration
 - No UI
 
@@ -231,9 +239,11 @@ Further expansion still requires a Decision in [`EXPANSION_GATE.md`](EXPANSION_G
 
 The v0.1 structural Validate surface is **frozen** (see above). Default next work is **not** another structural finding code.
 
-_Deepen Decision D3 (still adapter-side; new Decision or explicit deepen note):_
+_Still adapter-side; each needs its own Decision or deepen — do not lump:_
 
-- PDDL import sync; optional planner-backed formal findings (`FORMAL_*` / `PDDL_*`)
+- **Convention-`FORMAL_*` extensions** (D3): e.g. an explicit establishment convention so some free-form labels can be green without a planner; sanitize-collision findings
+- **Planner-backed checks** (D3 / Candidate B): external planner / planner-gated findings — optional, never required for demos/tests; distinct from convention-`FORMAL_*`
+- **PDDL import sync** (D3 / Candidate B): separate job from findings
 
 _Or deepen Decision D2 further (still adapter-side):_
 

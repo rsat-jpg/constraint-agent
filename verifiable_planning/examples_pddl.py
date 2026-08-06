@@ -1,23 +1,27 @@
 """
-Plan → Validate → PDDL export demo (Expansion Gate Decision D3).
+Plan → Validate → PDDL export + convention-FORMAL_* demo (Expansion Gate D3).
 
-Export-only — no planner binary, no network. Structural Validate stays the gate.
+No planner binary, no network. Structural Validate stays the offline gate.
+Convention-FORMAL_* is static over Plan + LOSSY_EDGES — not planner reachability.
 """
 
 from __future__ import annotations
 
 from verifiable_planning import Plan, Step, ValidationResult, validate_plan
 from verifiable_planning.adapters.pddl_bridge import (
+    FORMAL_UNESTABLISHED_PRECONDITION,
     LOSSY_EDGES,
+    check_unestablished_preconditions,
     free_form_precondition_labels,
     plan_to_pddl,
 )
 
 
-def print_result(result: ValidationResult) -> None:
+def print_result(result: ValidationResult, *, title: str | None = None) -> None:
     status = "VALID" if result.is_valid else "INVALID"
+    label = title or f"Plan: {result.plan_id}"
     print(f"\n{'='*60}")
-    print(f"Plan: {result.plan_id}  →  {status}")
+    print(f"{label}  →  {status}")
     print(f"{'='*60}")
     if not result.findings:
         print("No findings.")
@@ -39,10 +43,10 @@ def main() -> None:
     print(LOSSY_EDGES)
 
     # ------------------------------------------------------------------
-    # A. Happy path: structurally clean chain → export
+    # A. Happy path: structurally clean chain → export + formal clean
     # ------------------------------------------------------------------
     print("\n" + "#" * 60)
-    print("# Plan → Validate → PDDL — happy path (clean chain)")
+    print("# Plan → Validate → formal → PDDL — happy path (clean chain)")
     print("#" * 60)
 
     clean = Plan(
@@ -59,19 +63,24 @@ def main() -> None:
         ],
     )
     structural = validate_plan(clean)
-    print_result(structural)
+    print_result(structural, title="Structural")
     if not structural.is_valid:
         raise SystemExit("Clean plan must be structurally VALID.")
+
+    formal_clean = check_unestablished_preconditions(clean)
+    print_result(formal_clean, title="Convention-FORMAL")
+    if not formal_clean.is_valid:
+        raise SystemExit("Clean plan (no free-form labels) must be formal-clean.")
 
     export = plan_to_pddl(clean)
     print("\n--- PDDL export (truncated) ---")
     print(export)
 
     # ------------------------------------------------------------------
-    # B. Deliberate semantic gap: free-form label, still structurally VALID
+    # B. Deliberate semantic gap: structural VALID, formal ERROR
     # ------------------------------------------------------------------
     print("\n" + "#" * 60)
-    print("# Deliberate label gap — structural VALID, visible in export")
+    print("# Deliberate label gap — structural VALID, formal ERROR")
     print("#" * 60)
 
     gap = Plan(
@@ -93,7 +102,7 @@ def main() -> None:
         ],
     )
     structural_gap = validate_plan(gap)
-    print_result(structural_gap)
+    print_result(structural_gap, title="Structural")
     if not structural_gap.is_valid:
         raise SystemExit("Label-gap plan must remain structurally VALID.")
     if "PRECONDITION_NOT_IN_DEPENDS_ON" in {f.code for f in structural_gap.findings}:
@@ -103,6 +112,17 @@ def main() -> None:
 
     labels = free_form_precondition_labels(gap)
     print(f"Free-form precondition labels: {labels}")
+
+    formal_gap = check_unestablished_preconditions(gap)
+    print_result(formal_gap, title="Convention-FORMAL")
+    if formal_gap.is_valid:
+        raise SystemExit("Label-gap plan must be formal INVALID.")
+    formal_codes = {f.code for f in formal_gap.findings}
+    if FORMAL_UNESTABLISHED_PRECONDITION not in formal_codes:
+        raise SystemExit(
+            f"Expected {FORMAL_UNESTABLISHED_PRECONDITION}; got {formal_codes}."
+        )
+
     gap_export = plan_to_pddl(gap)
     print("\n--- PDDL export (label gap) ---")
     print(gap_export)
@@ -114,7 +134,10 @@ def main() -> None:
     ):
         raise SystemExit("p_data_licensed must not appear as an effect.")
 
-    print("\nDemo complete: structural Validate unchanged; PDDL export is optional.")
+    print(
+        "\nDemo complete: structural Validate unchanged; "
+        "convention-FORMAL_* and PDDL export are optional (no planner)."
+    )
 
 
 if __name__ == "__main__":

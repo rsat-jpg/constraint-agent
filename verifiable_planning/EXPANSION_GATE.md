@@ -3,7 +3,7 @@
 Written criteria for adding capabilities after the v0.1 Validate core.  
 Companion to [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md) and [`COMMIT_PROTOCOL.md`](COMMIT_PROTOCOL.md).
 
-Last updated: 2026-08-04
+Last updated: 2026-08-05
 
 ---
 
@@ -157,6 +157,31 @@ Amended 2026-08-04: irreversible/checkpoint check (still Candidate C / D2 — no
 **Counterexample sketch (for CP1):** Plan with steps `a` → `b` where `b.preconditions == ["data_licensed"]` (not a step id), `b.depends_on == ["a"]`, and no step establishes `data_licensed`. `validate_plan` → `VALID` (no `PRECONDITION_NOT_IN_DEPENDS_ON`). Export should show `b` requiring predicate `data_licensed` while init/effects lack it.
 
 **Preconditions:** G1–G5 hold (milestones 0–17 done; demos + tests green 2026-08-04; contracts stable; single-purpose thin export boundary).
+
+#### D3 deepen — Convention `FORMAL_*` unestablished free-form preconditions — 2026-08-05
+
+**Status:** CP1 approved; adapter + demo/tests landed (milestone 19). Still Candidate B / D3 — no new Decision letter.
+
+| Field | Answer |
+|-------|--------|
+| **Candidate / failure mode** | **B (deepen).** Export made the `data_licensed`-style gap *inspectable*; callers still had no structured finding. Free-form precondition labels remain ignored by structural Validate and stay outside the frozen 13-code set. |
+| **Why structural Validate is insufficient** | Same as D3: graph/shape only; free-form labels ignored; adding a structural code would unfreeze `0.1.x`. Export alone does not emit findings or make plan quality measurable beyond human inspection of PDDL text. |
+| **Adapter boundary** | Core (`models`, `validators`, frozen `finding_codes`, package `__init__`) never imports the PDDL/formal adapter or any planner SDK/binary. Deepen adds adapter-local **convention-`FORMAL_*`** codes (not the frozen structural set). Analysis is **static over `Plan` + documented D3 `LOSSY_EDGES`** via `check_unestablished_preconditions(plan) -> ValidationResult` — **not** classical/PDDL planner reachability and **not** sound w.r.t. full PDDL semantics. No required planner for default install, demos, or tests. |
+| **Success signal** | (1) Clean chain with **no** free-form precondition labels → no `FORMAL_*` errors. (2) Label-gap plan (`b.preconditions == ["data_licensed"]`) remains structurally `VALID` under `validate_plan`, yet `check_unestablished_preconditions` returns `FORMAL_UNESTABLISHED_PRECONDITION` ERROR (formal `is_valid` false). (3) Step-id-only preconditions do not emit `FORMAL_*` (structural owns that shape). (4) Core tests + surface freeze lock stay green without core importing the adapter. |
+| **Rollback** | Remove `check_unestablished_preconditions` + `FORMAL_*` constants/tests/demo assertions + this deepen note + milestone row; leave export-only D3 intact. Core contracts unchanged. |
+
+**v1 rule:** For each free-form (non-step-id) string in `step.preconditions`, emit `FORMAL_UNESTABLISHED_PRECONDITION` ERROR on that step (message includes label + mapped `p_*` name; suggested repair: remove/adjust the precondition, or add prior work that would establish the condition under a *future* convention). Empty plans: no formal findings (structural `EMPTY_PLAN` owns that case).
+
+**v1 green path:** Under current D3 mapping conventions, no step establishes free-form (`p_*`) predicates (effects are `done_*` only; `:init` empty; `expected_outcome` is not an effect). Therefore there is **no** “established free-form label” happy path in v1—the only formal-clean plans are those with **no free-form precondition labels**. A future Decision may add an establishment convention or planner-backed checks; that is out of scope here.
+
+**Out of scope for this deepen (separate later Decisions/deepens — do not lump):**
+
+1. **Convention-`FORMAL_*` extensions** — e.g. an explicit establishment convention so some free-form labels can be green without a planner; sanitize-collision findings.
+2. **Planner-backed checks** — external planner / planner-gated findings (distinct namespace or explicit planner gate); **not** required for demos/tests; distinct from convention-`FORMAL_*`.
+3. **PDDL import sync** — separate job from findings.
+4. Structural unfreeze / new structural codes; D2/executor work; Candidate D.
+
+**Preconditions:** G1–G5 hold (milestones 0–18 done; demos + tests green 2026-08-05; contracts stable; single-purpose thin deepen).
 
 ---
 

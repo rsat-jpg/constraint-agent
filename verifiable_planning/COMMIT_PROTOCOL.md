@@ -3,7 +3,7 @@
 Cadence and rules for when (and when not) to commit.  
 Companion to [`KNOWLEDGE_RUBRIC.md`](KNOWLEDGE_RUBRIC.md).
 
-Last updated: 2026-08-04
+Last updated: 2026-08-05
 
 ---
 
@@ -46,7 +46,7 @@ Before every commit:
 2. `python3 examples.py` runs from `verifiable_planning/` (good plan VALID; deliberate failures still produce expected findings).
 3. `python3 examples_runtime.py` runs from `verifiable_planning/` (structural VALID → happy runtime VALID; deliberate `RUNTIME_DEPENDENCY_ORDER`; irreversible happy path + deliberate `RUNTIME_MISSING_CHECKPOINT`).
 4. `python3 examples_llm.py` runs from `verifiable_planning/` (happy path VALID; deliberate failure shows `UNKNOWN_DEPENDENCY`).
-5. `python3 examples_pddl.py` runs from `verifiable_planning/` (clean export; label-gap plan stays structurally VALID; `p_data_licensed` visible in export without being an effect).
+5. `python3 examples_pddl.py` runs from `verifiable_planning/` (clean export + formal clean; label-gap plan stays structurally VALID; `p_data_licensed` visible in export; formal `FORMAL_UNESTABLISHED_PRECONDITION`).
 6. If a validator changed: at least one positive and one negative case exist (examples and/or tests).
 7. Diff is one logical increment — split unrelated changes.
 8. Message explains **why**, not a file list.
@@ -90,6 +90,7 @@ Keep subject ≤ ~72 chars. No trailing period on the subject line.
 | 16 | LLM e2e demo | `examples_llm.py` + docs: goal → plan_from_goal → validate happy path + deliberate UNKNOWN_DEPENDENCY; no new Decision/codes | done 2026-08-03 |
 | 17 | D2 irreversible checkpoint | `CHECKPOINT` event + `RUNTIME_MISSING_CHECKPOINT`; `linear_trace` emit; demo + tests; D2 success signal amended; structural freeze intact | done 2026-08-04 |
 | 18 | PDDL export adapter (D3) | Thin `plan_to_pddl` export-only; lossy edges documented; structurally VALID label-gap plan visible in export; no planner; structural freeze intact | done 2026-08-04 |
+| 19 | D3 convention FORMAL_* | `check_unestablished_preconditions` + `FORMAL_UNESTABLISHED_PRECONDITION`; demo + tests; no planner; structural freeze intact | done 2026-08-05 |
 
 Update the **Status** column when a milestone lands (`done` + date).
 

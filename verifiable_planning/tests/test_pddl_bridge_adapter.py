@@ -1,5 +1,5 @@
 """
-Tests for Decision D3 PDDL export adapter (export-only, no planner).
+Tests for Decision D3 PDDL export + convention-FORMAL_* adapter (no planner).
 """
 
 from __future__ import annotations
@@ -8,7 +8,10 @@ import pytest
 
 from verifiable_planning import Plan, Step, validate_plan
 from verifiable_planning.adapters.pddl_bridge import (
+    FORMAL_CODES,
+    FORMAL_UNESTABLISHED_PRECONDITION,
     LOSSY_EDGES,
+    check_unestablished_preconditions,
     free_form_precondition_labels,
     plan_to_pddl,
     pddl_atom,
@@ -114,3 +117,88 @@ def test_step_id_precondition_not_emitted_as_label_pred() -> None:
     text = plan_to_pddl(plan)
     assert "p_gather" not in text
     assert "(done_gather)" in text
+
+
+def test_formal_codes_not_structural_freeze_set() -> None:
+    from test_surface_freeze import FROZEN_V0_1_FINDING_CODES
+
+    assert FORMAL_CODES.isdisjoint(FROZEN_V0_1_FINDING_CODES)
+    assert FORMAL_UNESTABLISHED_PRECONDITION in FORMAL_CODES
+
+
+def test_clean_chain_formal_has_no_findings() -> None:
+    plan = Plan(
+        id="formal-clean",
+        goal="Ship a summary",
+        steps=[
+            Step(id="gather", description="Collect sources"),
+            Step(
+                id="write",
+                description="Draft summary",
+                depends_on=["gather"],
+                expected_outcome="Markdown summary ready",
+            ),
+        ],
+    )
+    assert validate_plan(plan).is_valid
+    formal = check_unestablished_preconditions(plan)
+    assert formal.is_valid
+    assert formal.findings == []
+
+
+def test_label_gap_structurally_valid_formal_error() -> None:
+    """D3 deepen success signal: structural VALID; formal ERROR."""
+    plan = Plan(
+        id="formal-label-gap",
+        goal="Publish licensed data summary",
+        steps=[
+            Step(
+                id="a",
+                description="Gather raw notes",
+                expected_outcome="Notes collected",
+            ),
+            Step(
+                id="b",
+                description="Publish summary",
+                depends_on=["a"],
+                preconditions=["data_licensed"],
+                expected_outcome="Summary published",
+            ),
+        ],
+    )
+    assert validate_plan(plan).is_valid
+    formal = check_unestablished_preconditions(plan)
+    assert not formal.is_valid
+    codes = [f.code for f in formal.findings]
+    assert codes == [FORMAL_UNESTABLISHED_PRECONDITION]
+    finding = formal.findings[0]
+    assert finding.step_ids == ["b"]
+    assert "data_licensed" in finding.message
+    assert "p_data_licensed" in finding.message
+
+
+def test_step_id_precondition_no_formal_finding() -> None:
+    plan = Plan(
+        id="formal-step-id-precond",
+        goal="Extract",
+        steps=[
+            Step(id="gather", description="Collect"),
+            Step(
+                id="extract",
+                description="Extract",
+                depends_on=["gather"],
+                preconditions=["gather"],
+                expected_outcome="Done",
+            ),
+        ],
+    )
+    formal = check_unestablished_preconditions(plan)
+    assert formal.is_valid
+    assert formal.findings == []
+
+
+def test_empty_plan_formal_no_findings() -> None:
+    plan = Plan(id="empty-formal", goal="Nothing", steps=[])
+    formal = check_unestablished_preconditions(plan)
+    assert formal.is_valid
+    assert formal.findings == []

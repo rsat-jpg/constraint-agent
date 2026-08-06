@@ -1,19 +1,34 @@
 """
-Thin PDDL export adapter (Expansion Gate Decision D3 / Candidate B).
+Thin PDDL / convention-formal adapter (Expansion Gate Decision D3 / Candidate B).
 
-Job: map a ``Plan`` to inspectable PDDL domain+problem text so semantic
-gaps (e.g. free-form precondition labels) are visible outside structural
-Validate. Never replaces ``validate_plan``. Never imports a planner.
-Core stays free of this module — callers import it explicitly.
+Job: (1) map a ``Plan`` to inspectable PDDL domain+problem text; (2) emit
+convention-``FORMAL_*`` findings for free-form precondition labels that are
+unestablished under documented ``LOSSY_EDGES``. Never replaces
+``validate_plan``. Never imports a planner. Core stays free of this module —
+callers import it explicitly.
 
-Export-only for D3 first success signal: no import sync, no FORMAL_* findings.
+Convention-``FORMAL_*`` checks are static over Plan + mapping conventions —
+not classical/PDDL planner reachability and not sound w.r.t. full PDDL
+semantics. Import sync and planner-backed checks are out of scope (separate
+Decision/deepen).
 """
 
 from __future__ import annotations
 
 import re
 
-from verifiable_planning.models import Plan, Step
+from verifiable_planning.models import (
+    Plan,
+    Severity,
+    Step,
+    ValidationFinding,
+    ValidationResult,
+)
+
+# Convention-FORMAL namespace — not part of the frozen structural finding_codes set.
+FORMAL_UNESTABLISHED_PRECONDITION = "FORMAL_UNESTABLISHED_PRECONDITION"
+
+FORMAL_CODES = frozenset({FORMAL_UNESTABLISHED_PRECONDITION})
 
 # Documented lossy edges (Decision D3). Keep in sync with README adapter section.
 LOSSY_EDGES = """
@@ -68,6 +83,55 @@ def free_form_precondition_labels(plan: Plan) -> list[str]:
             if p not in known:
                 labels.append(p)
     return labels
+
+
+def check_unestablished_preconditions(plan: Plan) -> ValidationResult:
+    """
+    Emit convention-``FORMAL_*`` findings for free-form precondition labels.
+
+    Under current D3 ``LOSSY_EDGES``, free-form labels map to ``p_*`` predicates
+    that no action establishes (effects are ``done_*`` only; ``:init`` empty;
+    ``expected_outcome`` is not an effect). v1 therefore has no "established
+    free-form" green path — only plans with no free-form precondition labels
+    are formal-clean.
+
+    This is not planner reachability. Empty plans yield no formal findings
+    (structural ``EMPTY_PLAN`` owns that case). Does not call ``validate_plan``.
+    """
+    findings: list[ValidationFinding] = []
+    if not plan.steps:
+        return ValidationResult(plan_id=plan.id, is_valid=True, findings=[])
+
+    known = plan.step_ids()
+    for step in plan.steps:
+        for label in step.preconditions:
+            if label in known:
+                continue
+            pred = _label_pred(label)
+            findings.append(
+                ValidationFinding(
+                    code=FORMAL_UNESTABLISHED_PRECONDITION,
+                    severity=Severity.ERROR,
+                    message=(
+                        f"Step '{step.id}' requires free-form precondition "
+                        f"{label!r} (mapped as ({pred})), which no step "
+                        f"establishes under current D3 mapping conventions."
+                    ),
+                    step_ids=[step.id],
+                    suggested_repair=(
+                        "Remove or adjust the free-form precondition, or add "
+                        "prior work that would establish the condition under a "
+                        "future establishment convention (v1 has none)."
+                    ),
+                )
+            )
+
+    errors = [f for f in findings if f.severity == Severity.ERROR]
+    return ValidationResult(
+        plan_id=plan.id,
+        is_valid=len(errors) == 0,
+        findings=findings,
+    )
 
 
 def _action_preconditions(step: Step, known: set[str]) -> list[str]:
@@ -133,7 +197,7 @@ def plan_to_pddl(plan: Plan) -> str:
         add_pred(_label_pred(label))
 
     lines: list[str] = []
-    lines.append(f";; PDDL export of plan id={plan.id!r} (Decision D3, export-only)")
+    lines.append(f";; PDDL export of plan id={plan.id!r} (Decision D3)")
     lines.append(";; Lossy edges: see LOSSY_EDGES in verifiable_planning.adapters.pddl_bridge")
     lines.append(f";; goal (prose, not compiled): {plan.goal}")
     lines.append("")
